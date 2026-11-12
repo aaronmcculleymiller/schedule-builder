@@ -1521,6 +1521,7 @@
     // ── Autosave ──
     let autosaveTimer = null;
     let suppressAutosave = false;
+    let savingInProgress = false;
     function triggerAutosave() {
       if (suppressAutosave) return;
       if (!currentUser || !state.cloudScheduleId) return;
@@ -1528,7 +1529,8 @@
       updateCloudStatus();
       clearTimeout(autosaveTimer);
       autosaveTimer = setTimeout(() => {
-        if (currentUser && state.cloudScheduleId && state.cloudDirty) {
+        if (currentUser && state.cloudScheduleId && state.cloudDirty && !savingInProgress) {
+          console.log('[autosave] triggering save...');
           saveToCloud();
         }
       }, 3000); // Save 3 seconds after last change
@@ -1816,7 +1818,9 @@
     // ── Cloud save ──
     async function saveToCloud() {
       if (!currentUser) { alert('Please sign in first.'); return; }
+      if (savingInProgress) { console.log('[save] skipped — save already in progress'); return; }
 
+      savingInProgress = true;
       suppressRealtimeReload = true; // Don't reload from our own save
       const statusEl = document.getElementById('cloudStatus');
       statusEl.textContent = '(saving...)';
@@ -1970,9 +1974,19 @@
         statusEl.textContent = '(save failed)';
         statusEl.className = 'cloud-status dirty';
       } finally {
+        savingInProgress = false;
         // Re-enable realtime reloads after a short delay
         // (allow Supabase to finish broadcasting our changes)
         setTimeout(() => { suppressRealtimeReload = false; }, 2000);
+        // If changes were made during save, trigger another autosave
+        if (state.cloudDirty && currentUser && state.cloudScheduleId) {
+          clearTimeout(autosaveTimer);
+          autosaveTimer = setTimeout(() => {
+            if (currentUser && state.cloudScheduleId && state.cloudDirty && !savingInProgress) {
+              saveToCloud();
+            }
+          }, 3000);
+        }
       }
     }
 
