@@ -1523,14 +1523,16 @@
     let suppressAutosave = false;
     let savingInProgress = false;
     function triggerAutosave() {
-      if (suppressAutosave) return;
-      if (!currentUser || !state.cloudScheduleId) return;
+      console.log('[autosave] triggerAutosave called', { suppressAutosave, hasUser: !!currentUser, cloudId: state.cloudScheduleId, savingInProgress });
+      if (suppressAutosave) { console.log('[autosave] suppressed'); return; }
+      if (!currentUser || !state.cloudScheduleId) { console.log('[autosave] no user or no cloudScheduleId'); return; }
       state.cloudDirty = true;
       updateCloudStatus();
       clearTimeout(autosaveTimer);
       autosaveTimer = setTimeout(() => {
+        console.log('[autosave] timer fired', { hasUser: !!currentUser, cloudId: state.cloudScheduleId, dirty: state.cloudDirty, savingInProgress });
         if (currentUser && state.cloudScheduleId && state.cloudDirty && !savingInProgress) {
-          console.log('[autosave] triggering save...');
+          console.log('[autosave] calling saveToCloud()');
           saveToCloud();
         }
       }, 3000); // Save 3 seconds after last change
