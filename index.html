@@ -1074,6 +1074,172 @@
       color: #999;
       font-weight: 600;
     }
+
+    /* ── Share Modal ── */
+    .share-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 5000;
+      justify-content: center;
+      align-items: center;
+    }
+    .share-modal.show { display: flex; }
+    .share-modal-content {
+      background: white;
+      border-radius: 8px;
+      width: 480px;
+      max-height: 70vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .share-modal-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid #eee;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .share-modal-header h3 { margin: 0; font-size: 16px; }
+    .share-modal-body {
+      padding: 16px 20px;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .share-invite-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .share-invite-row input {
+      flex: 1;
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+    .share-invite-row select {
+      padding: 8px 10px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 13px;
+      background: white;
+    }
+    .share-invite-row button {
+      padding: 8px 16px;
+      background: #3498db;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .share-invite-row button:hover { background: #2980b9; }
+    .share-section-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #666;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    .share-member-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .share-member-item:last-child { border-bottom: none; }
+    .share-member-info {
+      display: flex;
+      flex-direction: column;
+    }
+    .share-member-name {
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .share-member-email {
+      font-size: 12px;
+      color: #888;
+    }
+    .share-member-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .share-member-role {
+      font-size: 12px;
+      color: #3498db;
+      background: #eaf2fb;
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+    .share-member-remove {
+      background: none;
+      border: none;
+      color: #ccc;
+      cursor: pointer;
+      font-size: 18px;
+      padding: 0 4px;
+      line-height: 1;
+    }
+    .share-member-remove:hover { color: #e74c3c; }
+    .share-link-section {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid #eee;
+    }
+    .share-link-row {
+      display: flex;
+      gap: 8px;
+    }
+    .share-link-row input {
+      flex: 1;
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 13px;
+      background: #f8f9fa;
+      color: #555;
+    }
+    .share-link-row button {
+      padding: 8px 16px;
+      background: #f0f0f0;
+      color: #333;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 13px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .share-link-row button:hover { background: #e0e0e0; }
+    .share-btn {
+      padding: 6px 14px;
+      background: #3498db;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      cursor: pointer;
+      font-weight: 500;
+      display: none;
+    }
+    .share-btn:hover { background: #2980b9; }
+    .share-invite-error {
+      color: #e74c3c;
+      font-size: 13px;
+      margin-bottom: 12px;
+      display: none;
+    }
+    .share-invite-success {
+      color: #27ae60;
+      font-size: 13px;
+      margin-bottom: 12px;
+      display: none;
+    }
   </style>
 </head>
 <body>
@@ -1103,6 +1269,7 @@
             Sign in with Google
           </button>
         </div>
+        <button class="share-btn" id="shareBtn" onclick="openShareModal()">Share</button>
         <button class="primary" id="manageRoomsBtn">Manage Locations</button>
         <button class="primary" id="manageColorsBtn">Manage Event Types</button>
       </div>
@@ -1267,6 +1434,42 @@
     </div>
   </div>
 
+  <!-- Share Modal -->
+  <div class="share-modal" id="shareModal">
+    <div class="share-modal-content">
+      <div class="share-modal-header">
+        <h3>Share Schedule</h3>
+        <button class="modal-close" onclick="closeShareModal()">&times;</button>
+      </div>
+      <div class="share-modal-body">
+        <div class="share-section-label">Invite people</div>
+        <div class="share-invite-row">
+          <input type="email" id="shareEmailInput" placeholder="Email address">
+          <select id="shareRoleSelect">
+            <option value="editor">Editor</option>
+            <option value="viewer">Viewer</option>
+            <option value="admin">Admin</option>
+          </select>
+          <button onclick="inviteMember()">Invite</button>
+        </div>
+        <div class="share-invite-error" id="shareInviteError"></div>
+        <div class="share-invite-success" id="shareInviteSuccess"></div>
+        <div class="share-section-label">Members</div>
+        <div id="shareMembersList"></div>
+        <div class="share-link-section">
+          <div class="share-section-label">Share link</div>
+          <div class="share-link-row">
+            <input type="text" id="shareLinkInput" readonly>
+            <button onclick="copyShareLink()">Copy link</button>
+          </div>
+          <div style="font-size: 11px; color: #999; margin-top: 6px;">
+            Anyone with this link who is a member can open the schedule directly.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <input type="file" id="fileInput" accept=".json" style="display: none;">
 
   <div class="context-menu" id="contextMenu"></div>
@@ -1333,9 +1536,11 @@
 
     // ── Auth helpers ──
     async function signInWithGoogle() {
+      // Preserve ?schedule= param through OAuth redirect so shared links work
+      const redirectUrl = window.location.origin + window.location.pathname + window.location.search;
       const { error } = await supabaseClient.auth.signInWithOAuth({
         provider: 'google',
-        options: { redirectTo: window.location.origin + window.location.pathname }
+        options: { redirectTo: redirectUrl }
       });
       if (error) alert('Sign-in error: ' + error.message);
     }
@@ -1374,28 +1579,60 @@
 
     function updateCloudStatus() {
       const el = document.getElementById('cloudStatus');
+      const shareBtn = document.getElementById('shareBtn');
       if (!state.cloudScheduleId) {
         el.textContent = '';
         el.className = 'cloud-status';
+        shareBtn.style.display = 'none';
       } else if (state.cloudDirty) {
         el.textContent = '(unsaved changes)';
         el.className = 'cloud-status dirty';
+        shareBtn.style.display = currentUser ? 'inline-block' : 'none';
       } else {
         el.textContent = '(saved to cloud)';
         el.className = 'cloud-status saved';
+        shareBtn.style.display = currentUser ? 'inline-block' : 'none';
       }
     }
+
+    // ── URL parameter handling ──
+    function getScheduleFromUrl() {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('schedule');
+    }
+
+    function clearScheduleFromUrl() {
+      const url = new URL(window.location);
+      url.searchParams.delete('schedule');
+      window.history.replaceState({}, '', url.pathname);
+    }
+
+    let pendingScheduleLoad = getScheduleFromUrl();
 
     // Listen for auth state changes
     supabaseClient.auth.onAuthStateChange((event, session) => {
       currentUser = session?.user || null;
       updateAuthUI();
+      // After sign-in, if there's a pending schedule from URL, load it
+      if (currentUser && pendingScheduleLoad) {
+        const schedId = pendingScheduleLoad;
+        pendingScheduleLoad = null;
+        clearScheduleFromUrl();
+        loadFromCloud(schedId);
+      }
     });
 
     // Check initial session
     supabaseClient.auth.getSession().then(({ data: { session } }) => {
       currentUser = session?.user || null;
       updateAuthUI();
+      // If already signed in and URL has a schedule, load it
+      if (currentUser && pendingScheduleLoad) {
+        const schedId = pendingScheduleLoad;
+        pendingScheduleLoad = null;
+        clearScheduleFromUrl();
+        loadFromCloud(schedId);
+      }
     });
 
     // ── Schedules modal ──
@@ -1450,6 +1687,130 @@
       const div = document.createElement('div');
       div.textContent = str;
       return div.innerHTML;
+    }
+
+    // ── Share modal ──
+    function openShareModal() {
+      if (!currentUser) { alert('Please sign in first.'); return; }
+      if (!state.cloudScheduleId) { alert('Save the schedule to the cloud first.'); return; }
+      const modal = document.getElementById('shareModal');
+      document.getElementById('shareEmailInput').value = '';
+      document.getElementById('shareInviteError').style.display = 'none';
+      document.getElementById('shareInviteSuccess').style.display = 'none';
+      // Set share link
+      const shareUrl = window.location.origin + window.location.pathname + '?schedule=' + state.cloudScheduleId;
+      document.getElementById('shareLinkInput').value = shareUrl;
+      modal.classList.add('show');
+      loadShareMembers();
+    }
+
+    function closeShareModal() {
+      document.getElementById('shareModal').classList.remove('show');
+    }
+
+    // Close share modal on backdrop click
+    document.getElementById('shareModal').addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) closeShareModal();
+    });
+
+    async function loadShareMembers() {
+      const list = document.getElementById('shareMembersList');
+      list.innerHTML = '<div style="color:#999;font-size:13px;padding:8px 0;">Loading members...</div>';
+      try {
+        const { data, error } = await supabaseClient.rpc('get_schedule_members', { p_schedule_id: state.cloudScheduleId });
+        if (error) throw error;
+        const result = typeof data === 'string' ? JSON.parse(data) : data;
+        if (!result.success) throw new Error(result.error);
+        const members = result.members || [];
+        if (members.length === 0) {
+          list.innerHTML = '<div style="color:#999;font-size:13px;padding:8px 0;">No members yet</div>';
+          return;
+        }
+        list.innerHTML = members.map(m => `
+          <div class="share-member-item">
+            <div class="share-member-info">
+              <span class="share-member-name">${escapeHTML(m.display_name || m.email)}${m.is_you ? ' (you)' : ''}</span>
+              <span class="share-member-email">${escapeHTML(m.email)}</span>
+            </div>
+            <div class="share-member-actions">
+              <span class="share-member-role">${m.role}</span>
+              ${!m.is_you ? `<button class="share-member-remove" title="Remove" onclick="removeMember('${m.user_id}')">&times;</button>` : ''}
+            </div>
+          </div>
+        `).join('');
+      } catch (err) {
+        list.innerHTML = `<div style="color:#e74c3c;font-size:13px;padding:8px 0;">Error loading members: ${escapeHTML(err.message)}</div>`;
+      }
+    }
+
+    async function inviteMember() {
+      const emailInput = document.getElementById('shareEmailInput');
+      const roleSelect = document.getElementById('shareRoleSelect');
+      const errorEl = document.getElementById('shareInviteError');
+      const successEl = document.getElementById('shareInviteSuccess');
+      const email = emailInput.value.trim();
+      errorEl.style.display = 'none';
+      successEl.style.display = 'none';
+
+      if (!email) {
+        errorEl.textContent = 'Please enter an email address.';
+        errorEl.style.display = 'block';
+        return;
+      }
+
+      try {
+        const { data, error } = await supabaseClient.rpc('invite_member_by_email', {
+          p_schedule_id: state.cloudScheduleId,
+          p_email: email,
+          p_role: roleSelect.value
+        });
+        if (error) throw error;
+        const result = typeof data === 'string' ? JSON.parse(data) : data;
+        if (!result.success) {
+          errorEl.textContent = result.error;
+          errorEl.style.display = 'block';
+          return;
+        }
+        successEl.textContent = `Invited ${email} as ${roleSelect.value}`;
+        successEl.style.display = 'block';
+        emailInput.value = '';
+        loadShareMembers();
+      } catch (err) {
+        errorEl.textContent = 'Error: ' + err.message;
+        errorEl.style.display = 'block';
+      }
+    }
+
+    async function removeMember(userId) {
+      if (!confirm('Remove this member from the schedule?')) return;
+      try {
+        const { data, error } = await supabaseClient.rpc('remove_schedule_member', {
+          p_schedule_id: state.cloudScheduleId,
+          p_user_id: userId
+        });
+        if (error) throw error;
+        const result = typeof data === 'string' ? JSON.parse(data) : data;
+        if (!result.success) {
+          alert(result.error);
+          return;
+        }
+        loadShareMembers();
+      } catch (err) {
+        alert('Error removing member: ' + err.message);
+      }
+    }
+
+    function copyShareLink() {
+      const input = document.getElementById('shareLinkInput');
+      input.select();
+      navigator.clipboard.writeText(input.value).then(() => {
+        const btn = input.nextElementSibling;
+        btn.textContent = 'Copied!';
+        setTimeout(() => { btn.textContent = 'Copy link'; }, 2000);
+      }).catch(() => {
+        // Fallback
+        document.execCommand('copy');
+      });
     }
 
     // ── Cloud save ──
