@@ -1,0 +1,2873 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Schedule Builder</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='2' y='6' width='28' height='24' rx='3' fill='%232c3e50'/%3E%3Crect x='2' y='6' width='28' height='7' rx='3' fill='%233498db'/%3E%3Crect x='6' y='16' width='5' height='4' rx='1' fill='%2327ae60'/%3E%3Crect x='13.5' y='16' width='5' height='4' rx='1' fill='%23e67e22'/%3E%3Crect x='21' y='16' width='5' height='4' rx='1' fill='%239b59b6'/%3E%3Crect x='6' y='23' width='5' height='4' rx='1' fill='%23e74c3c'/%3E%3Crect x='13.5' y='23' width='5' height='4' rx='1' fill='%233498db'/%3E%3Crect x='21' y='23' width='5' height='4' rx='1' fill='%2327ae60'/%3E%3C/svg%3E">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: #f5f5f5;
+      color: #333;
+    }
+
+    .container {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    .header {
+      background: #2c3e50;
+      color: white;
+      padding: 8px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .header-title {
+      font-size: 20px;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 4px;
+      border: 1px solid transparent;
+      min-width: 120px;
+    }
+
+    .header-title:hover {
+      border-color: rgba(255,255,255,0.3);
+      background: rgba(255,255,255,0.1);
+    }
+
+    .header-title-input {
+      font-size: 20px;
+      font-weight: 600;
+      background: rgba(255,255,255,0.15);
+      color: white;
+      border: 1px solid rgba(255,255,255,0.4);
+      border-radius: 4px;
+      padding: 4px 8px;
+      font-family: inherit;
+      outline: none;
+      min-width: 200px;
+    }
+
+    .file-menu-wrapper {
+      position: relative;
+    }
+
+    .file-btn {
+      padding: 4px 10px;
+      background: none;
+      border: none;
+      color: rgba(255,255,255,0.7);
+      font-size: 12px;
+      cursor: pointer;
+      border-radius: 3px;
+    }
+
+    .file-btn:hover {
+      background: rgba(255,255,255,0.1);
+      color: white;
+    }
+
+    .menu-dropdown {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      z-index: 3000;
+      min-width: 180px;
+      overflow: hidden;
+    }
+
+    .menu-dropdown.show {
+      display: block;
+    }
+
+    .menu-dropdown-item {
+      padding: 10px 16px;
+      font-size: 13px;
+      color: #333;
+      cursor: pointer;
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: left;
+      display: block;
+    }
+
+    .menu-dropdown-item:hover {
+      background: #f0f0f0;
+    }
+
+    .menu-divider {
+      height: 1px;
+      background: #eee;
+      margin: 4px 0;
+    }
+
+    button {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 4px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    button.primary {
+      background: #3498db;
+      color: white;
+    }
+
+    button.primary:hover {
+      background: #2980b9;
+    }
+
+    button.success {
+      background: #27ae60;
+      color: white;
+    }
+
+    button.success:hover {
+      background: #229954;
+    }
+
+    button.danger {
+      background: #e74c3c;
+      color: white;
+    }
+
+    button.danger:hover {
+      background: #c0392b;
+    }
+
+    button.secondary {
+      background: #95a5a6;
+      color: white;
+    }
+
+    button.secondary:hover {
+      background: #7f8c8d;
+    }
+
+    .date-tabs {
+      background: white;
+      border-bottom: 2px solid #ddd;
+      display: flex;
+      align-items: center;
+      overflow-x: hidden;
+      padding: 0 20px;
+      height: 46px;
+      gap: 10px;
+    }
+
+    .date-tab {
+      padding: 8px 16px;
+      cursor: grab;
+      background: #ecf0f1;
+      border: none;
+      border-radius: 4px 4px 0 0;
+      font-size: 13px;
+      font-weight: 500;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+
+    .date-tab.active {
+      background: #3498db;
+      color: white;
+      border-bottom: 3px solid #2471a3;
+      margin-bottom: -2px;
+      font-weight: 600;
+    }
+
+    .date-tab.active .date-tab-close {
+      color: rgba(255,255,255,0.7);
+    }
+
+    .date-tab.active .date-tab-close:hover {
+      color: white;
+    }
+
+    .date-tab:hover {
+      background: #d5dbdb;
+    }
+
+    .date-tab.active:hover {
+      background: #2980b9;
+    }
+
+    .date-tab-close {
+      background: none;
+      border: none;
+      padding: 0;
+      font-size: 16px;
+      color: #666;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+    }
+
+    .date-tab-close:hover {
+      color: #e74c3c;
+    }
+
+    .date-tab.tab-dragging {
+      opacity: 0.4;
+    }
+
+    .date-tab.tab-drag-over-left {
+      border-left: 3px solid #3498db;
+    }
+
+    .date-tab.tab-drag-over-right {
+      border-right: 3px solid #3498db;
+    }
+
+    .add-date-btn {
+      padding: 8px 12px;
+      background: #27ae60;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .main-content {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+
+    .scroll-container {
+      flex: 1;
+      overflow: auto;
+      position: relative;
+      background: white;
+    }
+
+    .schedule-grid {
+      display: flex;
+      min-width: fit-content;
+    }
+
+    .time-column {
+      width: 130px;
+      flex-shrink: 0;
+      position: sticky;
+      left: 0;
+      z-index: 3;
+      background: #f8f8f8;
+      border-right: 2px solid #ccc;
+    }
+
+    .time-header {
+      position: sticky;
+      top: 0;
+      z-index: 4;
+      height: 48px;
+      background: #f8f8f8;
+      border-bottom: 2px solid #ccc;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      padding: 0 4px;
+    }
+
+    .time-range-select {
+      font-size: 11px;
+      padding: 2px 3px;
+      border: 1px solid #ccc;
+      border-radius: 3px;
+      background: white;
+      cursor: pointer;
+      width: 56px;
+    }
+
+    .time-range-label {
+      font-size: 10px;
+      color: #666;
+    }
+
+    .time-body {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .time-label {
+      height: 12px;
+      font-size: 9px;
+      color: #999;
+      display: flex;
+      align-items: flex-start;
+      justify-content: flex-end;
+      padding-right: 6px;
+      border-top: 1px solid #eee;
+      white-space: nowrap;
+      position: relative;
+      line-height: 1;
+      padding-top: 1px;
+    }
+
+    .time-label.hour-mark {
+      color: #333;
+      font-weight: bold;
+      font-size: 10px;
+      border-top: 2px solid #999;
+    }
+
+    .time-label.quarter-mark {
+      color: #777;
+      border-top: 1px solid #ccc;
+    }
+
+    .time-label.five-min {
+      color: #bbb;
+      font-size: 8px;
+    }
+
+    .room-column {
+      min-width: 200px;
+      width: 200px;
+      flex-shrink: 0;
+      border-right: 1px solid #ddd;
+      background: white;
+    }
+
+    .room-header {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      height: 48px;
+      background: #eef2f5;
+      border-bottom: 2px solid #ccc;
+      padding: 0 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: grab;
+    }
+
+    .room-header:active {
+      cursor: grabbing;
+    }
+
+    .room-column.column-drag-over-left {
+      border-left: 3px solid #3498db;
+    }
+
+    .room-column.column-drag-over-right {
+      border-right: 3px solid #3498db;
+    }
+
+    .room-column.column-dragging {
+      opacity: 0.4;
+    }
+
+    .room-header-info {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-width: 0;
+      justify-content: center;
+    }
+
+    .room-name {
+      font-weight: 600;
+      font-size: 12px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .room-notes {
+      font-weight: 400;
+      font-size: 10px;
+      color: #666;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-top: 1px;
+    }
+
+    .room-header-close {
+      background: none;
+      border: none;
+      padding: 0;
+      font-size: 14px;
+      color: #999;
+      cursor: pointer;
+      min-width: 20px;
+      min-height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .room-header-close:hover {
+      color: #e74c3c;
+    }
+
+    .room-body {
+      position: relative;
+      background-color: white;
+      background-image:
+        repeating-linear-gradient(
+          to bottom,
+          #999 0px, #999 2px,
+          transparent 2px, transparent 144px
+        ),
+        repeating-linear-gradient(
+          to bottom,
+          #ccc 0px, #ccc 1px,
+          transparent 1px, transparent 36px
+        ),
+        repeating-linear-gradient(
+          to bottom,
+          #f0f0f0 0px, #f0f0f0 1px,
+          transparent 1px, transparent 12px
+        );
+    }
+
+    .room-body.drag-over {
+      background-color: #e8f4f8;
+    }
+
+    .session-block {
+      position: absolute;
+      left: 2px;
+      right: 2px;
+      border-radius: 3px;
+      font-size: 11px;
+      line-height: 1.2;
+      padding: 2px 4px;
+      overflow: hidden;
+      cursor: pointer;
+      border: 1px solid rgba(0,0,0,0.15);
+      z-index: 1;
+      transition: opacity 0.2s;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .session-block:active {
+      cursor: grabbing;
+    }
+
+    .session-block.dragging {
+      opacity: 0.4;
+    }
+
+    .session-block:hover {
+      box-shadow: inset 0 0 3px rgba(0,0,0,0.2);
+    }
+
+    .session-block.all-room {
+      left: 0;
+      right: 0;
+      border-radius: 0;
+      opacity: 0.85;
+      z-index: 0;
+      cursor: grab;
+    }
+
+    .resize-handle {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 6px;
+      cursor: ns-resize;
+      z-index: 2;
+    }
+
+    .resize-handle-top {
+      top: -2px;
+    }
+
+    .resize-handle-bottom {
+      bottom: -2px;
+    }
+
+    .resize-handle:hover {
+      background: rgba(0,0,0,0.1);
+    }
+
+    .session-title {
+      font-size: 12px;
+      font-weight: 600;
+      white-space: normal;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+    }
+
+    .session-time {
+      font-size: 11px;
+      opacity: 0.75;
+      font-weight: 400;
+      white-space: nowrap;
+      margin-top: 1px;
+    }
+
+    .session-volunteer {
+      font-size: 11px;
+      font-weight: 400;
+      opacity: 0.75;
+      white-space: normal;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      margin-top: 2px;
+    }
+
+    .create-preview {
+      position: absolute;
+      left: 2px;
+      right: 2px;
+      background: rgba(52, 152, 219, 0.25);
+      border: 2px dashed #3498db;
+      border-radius: 3px;
+      pointer-events: none;
+      z-index: 5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      color: #2980b9;
+      font-weight: 500;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal.show {
+      display: flex;
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: 8px;
+      padding: 24px;
+      max-width: 500px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    }
+
+    .modal-header {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: #999;
+      padding: 0;
+      min-width: 24px;
+      min-height: 24px;
+    }
+
+    .modal-close:hover {
+      color: #333;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .form-group label {
+      font-weight: 500;
+      margin-bottom: 6px;
+      font-size: 13px;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 13px;
+      font-family: inherit;
+    }
+
+    .form-group textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: #3498db;
+      box-shadow: 0 0 0 2px rgba(52,152,219,0.1);
+    }
+
+    .color-picker-input {
+      width: 50px;
+      height: 40px;
+      padding: 2px;
+      cursor: pointer;
+    }
+
+    .custom-type-dropdown {
+      position: relative;
+    }
+
+    .custom-type-selected {
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+    }
+
+    .custom-type-selected:hover {
+      border-color: #3498db;
+    }
+
+    .custom-type-selected .type-swatch {
+      width: 16px;
+      height: 16px;
+      border-radius: 3px;
+      flex-shrink: 0;
+      border: 1px solid rgba(0,0,0,0.15);
+    }
+
+    .custom-type-selected .type-arrow {
+      margin-left: auto;
+      font-size: 10px;
+      color: #999;
+    }
+
+    .custom-type-options {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      z-index: 100;
+      max-height: 200px;
+      overflow-y: auto;
+      margin-top: 2px;
+    }
+
+    .custom-type-options.open {
+      display: block;
+    }
+
+    .custom-type-option {
+      padding: 8px 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+    }
+
+    .custom-type-option:hover {
+      background: #f0f0f0;
+    }
+
+    .custom-type-option .type-swatch {
+      width: 16px;
+      height: 16px;
+      border-radius: 3px;
+      flex-shrink: 0;
+      border: 1px solid rgba(0,0,0,0.15);
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 24px;
+      justify-content: flex-end;
+    }
+
+    .session-type-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      background: #f8f8f8;
+      border-radius: 4px;
+      margin-bottom: 12px;
+    }
+
+    .session-type-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .session-type-label {
+      font-weight: 500;
+      font-size: 13px;
+    }
+
+    .session-type-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .session-type-actions button {
+      padding: 4px 8px;
+      font-size: 11px;
+    }
+
+    .color-input-row {
+      display: flex;
+      gap: 12px;
+      align-items: flex-end;
+    }
+
+    .color-input-row input {
+      flex: 1;
+    }
+
+    .color-input-row .color-picker-input {
+      width: 50px;
+      height: 40px;
+      margin: 0;
+    }
+
+    .context-menu {
+      display: none;
+      position: fixed;
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      z-index: 2000;
+      min-width: 150px;
+    }
+
+    .context-menu.show {
+      display: block;
+    }
+
+    .context-menu-item {
+      padding: 10px 16px;
+      font-size: 13px;
+      cursor: pointer;
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: left;
+      position: relative;
+    }
+
+    .context-menu-item:hover {
+      background: #f0f0f0;
+    }
+
+    .context-menu-item.danger {
+      color: #e74c3c;
+      background: none;
+    }
+
+    .context-menu-item.danger:hover {
+      background: #fdecea;
+      color: #c0392b;
+    }
+
+    .context-menu-item.has-submenu::after {
+      content: '›';
+      position: absolute;
+      right: 10px;
+      font-size: 16px;
+      line-height: 1;
+    }
+
+    .context-submenu {
+      display: none;
+      position: absolute;
+      left: 100%;
+      top: 0;
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      min-width: 140px;
+      z-index: 2001;
+    }
+
+    .context-menu-item.has-submenu:hover .context-submenu {
+      display: block;
+    }
+
+    .context-submenu-item {
+      padding: 8px 16px;
+      font-size: 13px;
+      cursor: pointer;
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    .context-submenu-item:hover {
+      background: #f0f0f0;
+    }
+
+    .alert {
+      padding: 12px;
+      margin-bottom: 12px;
+      border-radius: 4px;
+      font-size: 13px;
+    }
+
+    .alert.error {
+      background: #fadbd8;
+      color: #c0392b;
+      border: 1px solid #f5b7b1;
+    }
+
+    .alert.success {
+      background: #d5f4e6;
+      color: #229954;
+      border: 1px solid #a9dfbf;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="header-left">
+        <span class="header-title" id="appTitle" title="Click to rename">Untitled Schedule</span>
+        <div class="file-menu-wrapper">
+          <button class="file-btn" id="fileMenuBtn">File &#9662;</button>
+          <div class="menu-dropdown" id="fileMenuDropdown">
+            <button class="menu-dropdown-item" id="newBtn">New</button>
+            <button class="menu-dropdown-item" id="openBtn">Open...</button>
+            <div class="menu-divider"></div>
+            <button class="menu-dropdown-item" id="saveBtn">Save</button>
+            <button class="menu-dropdown-item" id="copyBtn">Make a copy</button>
+          </div>
+        </div>
+      </div>
+      <div style="display: flex; gap: 10px;">
+        <button class="primary" id="manageRoomsBtn">Manage Locations</button>
+        <button class="primary" id="manageColorsBtn">Manage Event Types</button>
+      </div>
+    </div>
+
+    <div class="date-tabs">
+      <div id="dateTabsContainer" style="display: flex; align-items: center; gap: 10px; flex: 1;"></div>
+      <button class="primary" id="addSessionBtn">+ Add Event</button>
+      <button class="add-date-btn" id="addDateBtn">+ Add Day</button>
+    </div>
+
+    <div class="main-content">
+      <div class="scroll-container" id="scrollContainer">
+        <div class="schedule-grid" id="scheduleGrid"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="sessionModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <span id="sessionModalTitle">Add Event</span>
+        <button class="modal-close" id="closeSessionModal">&times;</button>
+      </div>
+      <div id="sessionModalAlert"></div>
+      <div class="form-group">
+        <label>Event Title</label>
+        <input type="text" id="sessionTitle" placeholder="e.g., Opening Event">
+      </div>
+      <div class="form-group">
+        <label>Start Time</label>
+        <input type="time" id="sessionStartTime">
+      </div>
+      <div class="form-group">
+        <label>End Time</label>
+        <input type="time" id="sessionEndTime">
+      </div>
+      <div class="form-group" style="flex-direction:row;align-items:center;gap:6px;">
+        <input type="checkbox" id="sessionShowTime" checked style="margin:0;">
+        <label for="sessionShowTime" style="margin:0;font-weight:400;cursor:pointer;">Show time on schedule</label>
+      </div>
+      <div class="form-group">
+        <label>Event Type</label>
+        <div class="custom-type-dropdown" id="sessionTypeDropdown">
+          <input type="hidden" id="sessionType" value="">
+          <div class="custom-type-selected" id="sessionTypeSelected">
+            <span class="type-swatch"></span>
+            <span class="type-label">Select type...</span>
+            <span class="type-arrow">&#9662;</span>
+          </div>
+          <div class="custom-type-options" id="sessionTypeOptions"></div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Notes (optional)</label>
+        <input type="text" id="sessionVolunteer" placeholder="">
+      </div>
+      <div class="form-group">
+        <label>Description (optional)</label>
+        <textarea id="sessionDescription" rows="4" style="width:100%;resize:vertical;font-family:inherit;font-size:13px;padding:6px 8px;border:1px solid #ddd;border-radius:4px;" placeholder=""></textarea>
+      </div>
+      <div class="form-group">
+        <label>Location(s)</label>
+        <div id="sessionRoomsContainer"></div>
+      </div>
+      <div class="modal-actions">
+        <button class="danger" id="deleteSessionBtn" style="margin-right: auto; display: none;">Delete</button>
+        <button class="secondary" id="cancelSessionBtn">Cancel</button>
+        <button class="success" id="saveSessionBtn">Save Event</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="roomModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <span>Add Location</span>
+        <button class="modal-close" id="closeRoomModal">&times;</button>
+      </div>
+      <div class="form-group">
+        <label>Location Name</label>
+        <input type="text" id="roomName" placeholder="e.g., Barnes Building, 8th Floor, Room 170">
+      </div>
+      <div class="form-group">
+        <label>Notes (optional)</label>
+        <input type="text" id="roomCapacity" placeholder="e.g., seats 80, 2nd floor">
+      </div>
+      <div class="modal-actions">
+        <button class="secondary" id="cancelRoomBtn">Cancel</button>
+        <button class="success" id="saveRoomBtn">Save Location</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="manageRoomsModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <span>Manage Locations</span>
+        <button class="modal-close" id="closeManageRoomsModal">&times;</button>
+      </div>
+      <p style="font-size: 13px; color: #666; margin-bottom: 16px;">Toggle locations on/off for the current tab. Locations you remove from a tab are not deleted — they can be added back anytime.</p>
+      <div id="roomsListContainer"></div>
+      <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd;">
+        <div class="form-group">
+          <label>Create New Location</label>
+          <input type="text" id="newRoomName" placeholder="Location name" style="margin-bottom: 8px;">
+          <input type="text" id="newRoomCapacity" placeholder="Notes (optional)">
+        </div>
+        <button class="success" id="addNewRoomBtn" style="width: 100%;">Create &amp; Add to This Tab</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="dateModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <span id="dateModalTitle">Add Day</span>
+        <button class="modal-close" id="closeDateModal">&times;</button>
+      </div>
+      <div id="dateModalAlert"></div>
+      <div class="form-group">
+        <label>Day Name</label>
+        <input type="text" id="dateInput" placeholder="e.g., Oct 21, Day 1, Monday">
+      </div>
+      <div class="modal-actions">
+        <button class="secondary" id="cancelDateBtn">Cancel</button>
+        <button class="success" id="saveDateBtn">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="colorsModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <span>Manage Event Types</span>
+        <button class="modal-close" id="closeColorsModal">&times;</button>
+      </div>
+      <div id="sessionTypesContainer"></div>
+      <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd;">
+        <div class="form-group">
+          <label>Add New Type</label>
+          <div class="color-input-row">
+            <input type="text" id="newTypeName" placeholder="Type name">
+            <input type="color" id="newTypeColor" class="color-picker-input" value="#3498db">
+          </div>
+        </div>
+        <button class="success" id="addTypeBtn" style="width: 100%;">Add Type</button>
+      </div>
+    </div>
+  </div>
+
+  <input type="file" id="fileInput" accept=".json" style="display: none;">
+
+  <div class="context-menu" id="contextMenu"></div>
+
+  <script>
+    const ROW_HEIGHT = 12;
+    const SLOTS_PER_HOUR = 12;
+
+    function getStartHour() {
+      return (state.dayStartHour && state.dayStartHour[state.currentDate] != null)
+        ? state.dayStartHour[state.currentDate] : 7;
+    }
+
+    function getEndHour() {
+      return (state.dayEndHour && state.dayEndHour[state.currentDate] != null)
+        ? state.dayEndHour[state.currentDate] : 22;
+    }
+
+    function setStartHour(val) {
+      if (!state.dayStartHour) state.dayStartHour = {};
+      state.dayStartHour[state.currentDate] = val;
+    }
+
+    function setEndHour(val) {
+      if (!state.dayEndHour) state.dayEndHour = {};
+      state.dayEndHour[state.currentDate] = val;
+    }
+
+    function totalSlots() {
+      return (getEndHour() - getStartHour()) * SLOTS_PER_HOUR;
+    }
+
+    const BUILT_IN_TYPES = {
+      'event-type-1': { label: 'Event Type 1', color: '#ff57f9' },
+      'event-type-2': { label: 'Event Type 2', color: '#57ebff' },
+      'event-type-3': { label: 'Event Type 3', color: '#8ac926' },
+      'event-type-4': { label: 'Event Type 4', color: '#1a82c4' },
+      'event-type-5': { label: 'Event Type 5', color: '#ffca3b' },
+      'event-type-6': { label: 'Event Type 6', color: '#ff924c' }
+    };
+
+    let state = {
+      appName: 'Untitled Schedule',
+      dayStartHour: { 'Day 1': 7 },
+      dayEndHour: { 'Day 1': 22 },
+      dates: ['Day 1'],
+      currentDate: 'Day 1',
+      allRooms: [
+        { id: 1, name: 'Location 1', notes: '' },
+        { id: 2, name: 'Location 2', notes: '' },
+        { id: 3, name: 'Location 3', notes: '' },
+        { id: 4, name: 'Location 4', notes: '' },
+        { id: 5, name: 'Location 5', notes: '' }
+      ],
+      tabRooms: {
+        'Day 1': [1, 2, 3, 4, 5]
+      },
+      sessions: {
+        'Day 1': []
+      },
+      sessionTypes: { ...BUILT_IN_TYPES },
+      nextSessionId: 1,
+      nextRoomId: 6,
+      selectedSession: null
+    };
+
+    // Interaction state (mouse-event based drag and resize)
+    let resizing = null;  // { sessionId, edge, roomId }
+    let dragState = null; // { sessionId, offsetY, spanSlots, isAllRooms, isDragging, startX, startY }
+    let draggingSessionId = null; // for visual feedback during render
+    let columnDrag = null; // { roomId, startX, startY, isDragging }
+    let createDrag = null; // { roomId, startSlot, currentSlot, startY }
+    let tabDrag = null;   // { date, startX, isDragging }
+
+    function getRoomById(id) {
+      return state.allRooms.find(r => r.id === id);
+    }
+
+    function currentRooms() {
+      if (!state.tabRooms[state.currentDate]) state.tabRooms[state.currentDate] = [];
+      return state.tabRooms[state.currentDate]
+        .map(id => getRoomById(id))
+        .filter(r => r != null);
+    }
+
+    function timeToMinutes(timeStr) {
+      const [h, m] = timeStr.split(':').map(Number);
+      return h * 60 + m;
+    }
+
+    function minutesToTime(minutes) {
+      const h = Math.floor(minutes / 60);
+      const m = minutes % 60;
+      return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+    }
+
+    function getSlotForTime(timeStr) {
+      const minutes = timeToMinutes(timeStr);
+      const startMinutes = getStartHour() * 60;
+      return Math.round((minutes - startMinutes) / 5);
+    }
+
+    function getSlotSpan(startTime, endTime) {
+      return getSlotForTime(endTime) - getSlotForTime(startTime);
+    }
+
+    function slotToTime(slot) {
+      return minutesToTime(getStartHour() * 60 + slot * 5);
+    }
+
+    function formatTimeDisplay(timeStr) {
+      const [h, m] = timeStr.split(':').map(Number);
+      const period = h < 12 ? 'am' : 'pm';
+      const display = h > 12 ? h - 12 : (h === 0 ? 12 : h);
+      return m === 0 ? `${display}${period}` : `${display}:${String(m).padStart(2, '0')}${period}`;
+    }
+
+    // Find the room body element under the cursor (fresh DOM query each time)
+    function getRoomBodyAt(clientX, clientY) {
+      const roomBodies = document.querySelectorAll('.room-body');
+      for (const rb of roomBodies) {
+        const rect = rb.getBoundingClientRect();
+        if (clientX >= rect.left && clientX <= rect.right) {
+          return { element: rb, roomId: parseInt(rb.dataset.roomId), rect };
+        }
+      }
+      return null;
+    }
+
+    // Get a fresh rect for a room body by ID
+    function getRoomBodyRect(roomId) {
+      const rb = document.querySelector(`.room-body[data-room-id="${roomId}"]`);
+      return rb ? rb.getBoundingClientRect() : null;
+    }
+
+    function calculateOverlapLayout(sessions) {
+      const layout = {};
+      if (sessions.length === 0) return layout;
+
+      const sorted = [...sessions].sort((a, b) => {
+        const aStart = timeToMinutes(a.startTime);
+        const bStart = timeToMinutes(b.startTime);
+        if (aStart !== bStart) return aStart - bStart;
+        return timeToMinutes(b.endTime) - timeToMinutes(a.endTime);
+      });
+
+      const groups = [];
+      let currentGroup = [sorted[0]];
+
+      for (let i = 1; i < sorted.length; i++) {
+        const s = sorted[i];
+        const overlapsAny = currentGroup.some(g =>
+          timeToMinutes(s.startTime) < timeToMinutes(g.endTime) &&
+          timeToMinutes(s.endTime) > timeToMinutes(g.startTime)
+        );
+        if (overlapsAny) {
+          currentGroup.push(s);
+        } else {
+          groups.push(currentGroup);
+          currentGroup = [s];
+        }
+      }
+      groups.push(currentGroup);
+
+      groups.forEach(group => {
+        if (group.length === 1) {
+          layout[group[0].id] = { col: 0, totalCols: 1 };
+          return;
+        }
+        const columns = [];
+        group.forEach(session => {
+          let placed = false;
+          for (let c = 0; c < columns.length; c++) {
+            const lastInCol = columns[c];
+            if (timeToMinutes(session.startTime) >= timeToMinutes(lastInCol.endTime)) {
+              columns[c] = session;
+              layout[session.id] = { col: c, totalCols: 0 };
+              placed = true;
+              break;
+            }
+          }
+          if (!placed) {
+            layout[session.id] = { col: columns.length, totalCols: 0 };
+            columns.push(session);
+          }
+        });
+        const totalCols = columns.length;
+        group.forEach(session => {
+          layout[session.id].totalCols = totalCols;
+        });
+      });
+
+      return layout;
+    }
+
+    function getTextColor(hexColor) {
+      const hex = hexColor.replace('#', '');
+      const r = parseInt(hex.substr(0, 2), 16);
+      const g = parseInt(hex.substr(2, 2), 16);
+      const b = parseInt(hex.substr(4, 2), 16);
+      const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+      return luminance < 0.5 ? '#ffffff' : '#000000';
+    }
+
+    function showAlert(elementId, message, type) {
+      const container = document.getElementById(elementId);
+      if (!container) return;
+      container.innerHTML = `<div class="alert ${type}">${message}</div>`;
+      setTimeout(() => { container.innerHTML = ''; }, 4000);
+    }
+
+
+    function renderSchedule() {
+      const grid = document.getElementById('scheduleGrid');
+      grid.innerHTML = '';
+
+      const sessions = state.sessions[state.currentDate] || [];
+
+      // Time column
+      const timeColumn = document.createElement('div');
+      timeColumn.className = 'time-column';
+
+      const timeHeader = document.createElement('div');
+      timeHeader.className = 'time-header';
+
+      // Time range controls
+      const formatHourLabel = (h) => {
+        const period = h < 12 ? 'AM' : 'PM';
+        const display = h > 12 ? h - 12 : (h === 0 ? 12 : h);
+        return `${display} ${period}`;
+      };
+
+      const startSelect = document.createElement('select');
+      startSelect.className = 'time-range-select';
+      startSelect.title = 'Day start time';
+      for (let h = 0; h < 24; h++) {
+        const opt = document.createElement('option');
+        opt.value = h;
+        opt.textContent = formatHourLabel(h);
+        if (h === getStartHour()) opt.selected = true;
+        startSelect.appendChild(opt);
+      }
+      startSelect.addEventListener('change', () => {
+        const newStart = parseInt(startSelect.value);
+        if (newStart >= getEndHour()) {
+          startSelect.value = getStartHour();
+          return;
+        }
+        setStartHour(newStart);
+        renderSchedule();
+      });
+
+      const dashLabel = document.createElement('span');
+      dashLabel.className = 'time-range-label';
+      dashLabel.textContent = '–';
+
+      const endSelect = document.createElement('select');
+      endSelect.className = 'time-range-select';
+      endSelect.title = 'Day end time';
+      for (let h = 1; h <= 24; h++) {
+        const opt = document.createElement('option');
+        opt.value = h;
+        opt.textContent = h === 24 ? '12 AM' : formatHourLabel(h);
+        if (h === getEndHour()) opt.selected = true;
+        endSelect.appendChild(opt);
+      }
+      endSelect.addEventListener('change', () => {
+        const newEnd = parseInt(endSelect.value);
+        if (newEnd <= getStartHour()) {
+          endSelect.value = getEndHour();
+          return;
+        }
+        setEndHour(newEnd);
+        renderSchedule();
+      });
+
+      timeHeader.appendChild(startSelect);
+      timeHeader.appendChild(dashLabel);
+      timeHeader.appendChild(endSelect);
+      timeColumn.appendChild(timeHeader);
+
+      const timeBody = document.createElement('div');
+      timeBody.className = 'time-body';
+
+      for (let slot = 0; slot < totalSlots(); slot++) {
+        const minutes = getStartHour() * 60 + slot * 5;
+        const hours = Math.floor(minutes / 60);
+        const mins = minutes % 60;
+        const timeLabel = document.createElement('div');
+        timeLabel.className = 'time-label';
+
+        const period = hours < 12 ? 'AM' : 'PM';
+        const displayHour = hours > 12 ? hours - 12 : (hours === 0 ? 12 : hours);
+        timeLabel.textContent = `${displayHour}:${mins.toString().padStart(2, '0')}`;
+
+        if (mins === 0) {
+          timeLabel.textContent += ` ${period}`;
+          timeLabel.classList.add('hour-mark');
+        } else if (mins % 15 === 0) {
+          timeLabel.classList.add('quarter-mark');
+        } else {
+          timeLabel.classList.add('five-min');
+        }
+
+        timeBody.appendChild(timeLabel);
+      }
+
+      timeColumn.appendChild(timeBody);
+      grid.appendChild(timeColumn);
+
+      // Room columns
+      currentRooms().forEach(room => {
+        const roomColumn = document.createElement('div');
+        roomColumn.className = 'room-column';
+
+        const roomHeader = document.createElement('div');
+        roomHeader.className = 'room-header';
+
+        const roomInfo = document.createElement('div');
+        roomInfo.className = 'room-header-info';
+        roomInfo.title = room.notes ? room.name + '\n' + room.notes : room.name;
+
+        const roomName = document.createElement('div');
+        roomName.className = 'room-name';
+        roomName.textContent = room.name;
+        roomInfo.appendChild(roomName);
+
+        if (room.notes) {
+          const roomNotes = document.createElement('div');
+          roomNotes.className = 'room-notes';
+          roomNotes.textContent = room.notes;
+          roomInfo.appendChild(roomNotes);
+        }
+
+        roomInfo.style.cursor = 'text';
+        roomInfo.ondblclick = (e) => {
+          e.stopPropagation();
+          const globalRoom = getRoomById(room.id);
+          if (!globalRoom) return;
+          const newName = prompt('Location name:', globalRoom.name);
+          if (newName !== null && newName.trim()) {
+            globalRoom.name = newName.trim();
+            const newNotes = prompt('Notes (optional):', globalRoom.notes || '');
+            globalRoom.notes = (newNotes !== null) ? newNotes.trim() : globalRoom.notes;
+            renderSchedule();
+          }
+        };
+
+        roomHeader.appendChild(roomInfo);
+
+        const closeBtn = document.createElement('button');
+        closeBtn.className = 'room-header-close';
+        closeBtn.innerHTML = '&times;';
+        closeBtn.onclick = () => removeRoom(room.id);
+        roomHeader.appendChild(closeBtn);
+
+        // Column drag to reorder
+        roomHeader.addEventListener('mousedown', (e) => {
+          if (e.button !== 0) return;
+          if (e.target.closest('.room-header-close')) return; // don't drag when clicking X
+          // Allow text cursor on room-name for double-click rename
+          columnDrag = {
+            roomId: room.id,
+            startX: e.clientX,
+            startY: e.clientY,
+            isDragging: false
+          };
+        });
+
+        roomColumn.dataset.roomId = room.id;
+        roomColumn.appendChild(roomHeader);
+
+        const roomBody = document.createElement('div');
+        roomBody.className = 'room-body';
+        roomBody.style.height = `${totalSlots() * ROW_HEIGHT}px`;
+        roomBody.dataset.roomId = room.id;
+
+        // Drag on empty space to create new event
+        roomBody.addEventListener('mousedown', (e) => {
+          if (e.button !== 0) return;
+          // Only start if clicking directly on room-body (not on a session block)
+          if (e.target !== roomBody) return;
+          const rect = roomBody.getBoundingClientRect();
+          const relativeY = e.clientY - rect.top;
+          const slot = Math.max(0, Math.min(totalSlots() - 1, Math.round(relativeY / ROW_HEIGHT)));
+          createDrag = {
+            roomId: room.id,
+            startSlot: slot,
+            currentSlot: slot,
+            startY: e.clientY,
+            isDragging: false
+          };
+        });
+
+        // Render sessions
+        const roomSessions = sessions.filter(s => s.allRooms || s.roomIds.includes(room.id));
+        const nonAllRoom = roomSessions.filter(s => !s.allRooms);
+        const overlapLayout = calculateOverlapLayout(nonAllRoom);
+
+        roomSessions.forEach(session => {
+          const startSlot = getSlotForTime(session.startTime);
+          const span = getSlotSpan(session.startTime, session.endTime);
+          const top = startSlot * ROW_HEIGHT;
+          const height = span * ROW_HEIGHT;
+
+          const typeInfo = state.sessionTypes[session.type] || { label: session.type, color: '#ccc' };
+          const bgColor = typeInfo.color;
+          const textColor = getTextColor(bgColor);
+
+          const sessionBlock = document.createElement('div');
+          sessionBlock.className = 'session-block' + (session.allRooms ? ' all-room' : '');
+          if (draggingSessionId === session.id) sessionBlock.classList.add('dragging');
+          sessionBlock.style.top = `${top}px`;
+          sessionBlock.style.height = `${height}px`;
+          sessionBlock.style.backgroundColor = bgColor;
+          sessionBlock.style.color = textColor;
+          sessionBlock.dataset.sessionId = session.id;
+
+          if (!session.allRooms && overlapLayout[session.id]) {
+            const layout = overlapLayout[session.id];
+            const colWidth = 100 / layout.totalCols;
+            sessionBlock.style.left = (layout.col * colWidth) + '%';
+            sessionBlock.style.width = colWidth + '%';
+          }
+
+          // All events get cursor: grab and drag+resize (including All Locations)
+          sessionBlock.style.cursor = 'grab';
+
+          // Mouse-based drag (replaces HTML5 drag API for accurate positioning)
+          sessionBlock.addEventListener('mousedown', (e) => {
+            if (e.button !== 0) return;
+            if (e.target.classList.contains('resize-handle')) return;
+            e.preventDefault();
+            dragState = {
+              sessionId: session.id,
+              offsetY: e.clientY - sessionBlock.getBoundingClientRect().top,
+              spanSlots: getSlotSpan(session.startTime, session.endTime),
+              isAllRooms: session.allRooms,
+              isDragging: false,
+              startX: e.clientX,
+              startY: e.clientY,
+              roomId: room.id
+            };
+          });
+
+          // Resize handles (all events, including All Locations)
+          const topHandle = document.createElement('div');
+          topHandle.className = 'resize-handle resize-handle-top';
+          topHandle.addEventListener('mousedown', (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            resizing = { sessionId: session.id, edge: 'top', roomId: room.id };
+            document.body.style.cursor = 'ns-resize';
+            document.body.style.userSelect = 'none';
+          });
+          sessionBlock.appendChild(topHandle);
+
+          const bottomHandle = document.createElement('div');
+          bottomHandle.className = 'resize-handle resize-handle-bottom';
+          bottomHandle.addEventListener('mousedown', (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            resizing = { sessionId: session.id, edge: 'bottom', roomId: room.id };
+            document.body.style.cursor = 'ns-resize';
+            document.body.style.userSelect = 'none';
+          });
+          sessionBlock.appendChild(bottomHandle);
+
+          sessionBlock.oncontextmenu = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            state.selectedSession = session;
+            showContextMenu(e.clientX, e.clientY);
+          };
+
+          const titleDiv = document.createElement('div');
+          titleDiv.className = 'session-title';
+          titleDiv.textContent = session.title;
+          sessionBlock.appendChild(titleDiv);
+
+          if (session.showTime !== false) {
+            const timeDiv = document.createElement('div');
+            timeDiv.className = 'session-time';
+            timeDiv.textContent = `${formatTimeDisplay(session.startTime)} – ${formatTimeDisplay(session.endTime)}`;
+            sessionBlock.appendChild(timeDiv);
+          }
+
+          if (session.volunteer) {
+            const volunteerDiv = document.createElement('div');
+            volunteerDiv.className = 'session-volunteer';
+            volunteerDiv.textContent = session.volunteer;
+            sessionBlock.appendChild(volunteerDiv);
+          }
+
+          roomBody.appendChild(sessionBlock);
+        });
+
+        roomColumn.appendChild(roomBody);
+        grid.appendChild(roomColumn);
+      });
+    }
+
+    // Helper: find which room column the cursor is over, and which side (left/right)
+    function getTabDropTarget(clientX) {
+      const tabs = document.querySelectorAll('.date-tab');
+      for (const tab of tabs) {
+        const rect = tab.getBoundingClientRect();
+        if (clientX >= rect.left && clientX <= rect.right) {
+          const mid = rect.left + rect.width / 2;
+          return {
+            date: tab.dataset.date,
+            side: clientX < mid ? 'left' : 'right',
+            element: tab
+          };
+        }
+      }
+      return null;
+    }
+
+    function getColumnDropTarget(clientX) {
+      const columns = document.querySelectorAll('.room-column');
+      for (const col of columns) {
+        const rect = col.getBoundingClientRect();
+        if (clientX >= rect.left && clientX <= rect.right) {
+          const mid = rect.left + rect.width / 2;
+          return {
+            roomId: parseInt(col.dataset.roomId),
+            side: clientX < mid ? 'left' : 'right',
+            element: col
+          };
+        }
+      }
+      return null;
+    }
+
+    // Escape key cancels create-drag
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && createDrag) {
+        createDrag = null;
+        document.body.style.userSelect = '';
+        document.querySelectorAll('.create-preview').forEach(el => el.remove());
+      }
+    });
+
+    // Global mousemove handles column drag, event drag, resize, and create-drag
+    document.addEventListener('mousemove', (e) => {
+      // --- CREATE DRAG (empty space drag to set time range) ---
+      if (createDrag) {
+        const dy = Math.abs(e.clientY - createDrag.startY);
+        if (!createDrag.isDragging && dy < 5) return;
+        if (!createDrag.isDragging) {
+          createDrag.isDragging = true;
+          document.body.style.userSelect = 'none';
+        }
+
+        const rect = getRoomBodyRect(createDrag.roomId);
+        if (!rect) return;
+        const relativeY = e.clientY - rect.top;
+        const slot = Math.max(0, Math.min(totalSlots() - 1, Math.round(relativeY / ROW_HEIGHT)));
+        createDrag.currentSlot = slot;
+
+        // Draw / update preview
+        const minSlot = Math.min(createDrag.startSlot, createDrag.currentSlot);
+        const maxSlot = Math.max(createDrag.startSlot, createDrag.currentSlot) + 1;
+        const rb = document.querySelector(`.room-body[data-room-id="${createDrag.roomId}"]`);
+        if (rb) {
+          let preview = rb.querySelector('.create-preview');
+          if (!preview) {
+            preview = document.createElement('div');
+            preview.className = 'create-preview';
+            rb.appendChild(preview);
+          }
+          preview.style.top = (minSlot * ROW_HEIGHT) + 'px';
+          preview.style.height = ((maxSlot - minSlot) * ROW_HEIGHT) + 'px';
+          preview.textContent = `${formatTimeDisplay(slotToTime(minSlot))} – ${formatTimeDisplay(slotToTime(maxSlot))}`;
+        }
+        return;
+      }
+
+      // --- TAB DRAG ---
+      if (tabDrag) {
+        const dx = Math.abs(e.clientX - tabDrag.startX);
+        if (!tabDrag.isDragging && dx < 8) return;
+
+        if (!tabDrag.isDragging) {
+          tabDrag.isDragging = true;
+          document.body.style.userSelect = 'none';
+          document.body.style.cursor = 'grabbing';
+        }
+
+        // Clear indicators
+        document.querySelectorAll('.date-tab').forEach(t => {
+          t.classList.remove('tab-dragging', 'tab-drag-over-left', 'tab-drag-over-right');
+        });
+
+        // Mark source
+        const srcTab = document.querySelector(`.date-tab[data-date="${CSS.escape(tabDrag.date)}"]`);
+        if (srcTab) srcTab.classList.add('tab-dragging');
+
+        // Find drop target
+        const target = getTabDropTarget(e.clientX);
+        if (target && target.date !== tabDrag.date) {
+          target.element.classList.add(target.side === 'left' ? 'tab-drag-over-left' : 'tab-drag-over-right');
+        }
+        return;
+      }
+
+      // --- COLUMN DRAG ---
+      if (columnDrag) {
+        const dx = Math.abs(e.clientX - columnDrag.startX);
+        const dy = Math.abs(e.clientY - columnDrag.startY);
+        if (!columnDrag.isDragging && dx < 8 && dy < 8) return;
+
+        if (!columnDrag.isDragging) {
+          columnDrag.isDragging = true;
+          document.body.style.userSelect = 'none';
+          document.body.style.cursor = 'grabbing';
+        }
+
+        // Clear all column drag indicators
+        document.querySelectorAll('.room-column').forEach(col => {
+          col.classList.remove('column-drag-over-left', 'column-drag-over-right', 'column-dragging');
+        });
+
+        // Mark source column as dragging
+        const srcCol = document.querySelector(`.room-column[data-room-id="${columnDrag.roomId}"]`);
+        if (srcCol) srcCol.classList.add('column-dragging');
+
+        // Highlight drop target
+        const target = getColumnDropTarget(e.clientX);
+        if (target && target.roomId !== columnDrag.roomId) {
+          target.element.classList.add(target.side === 'left' ? 'column-drag-over-left' : 'column-drag-over-right');
+        }
+        return;
+      }
+
+      // --- RESIZE ---
+      if (resizing) {
+        const rect = getRoomBodyRect(resizing.roomId);
+        if (!rect) return;
+        const relativeY = e.clientY - rect.top;
+        const slot = Math.max(0, Math.min(totalSlots() - 1, Math.round(relativeY / ROW_HEIGHT)));
+        const newTime = slotToTime(slot);
+
+        const sessions = state.sessions[state.currentDate] || [];
+        const session = sessions.find(s => s.id === resizing.sessionId);
+        if (!session) return;
+
+        if (resizing.edge === 'top') {
+          const endSlot = getSlotForTime(session.endTime);
+          if (slot < endSlot) session.startTime = newTime;
+        } else {
+          const startSlot = getSlotForTime(session.startTime);
+          if (slot > startSlot) session.endTime = newTime;
+        }
+        renderSchedule();
+        return;
+      }
+
+      // --- DRAG ---
+      if (!dragState) return;
+
+      const dx = Math.abs(e.clientX - dragState.startX);
+      const dy = Math.abs(e.clientY - dragState.startY);
+      if (!dragState.isDragging && dx < 5 && dy < 5) return;
+
+      if (!dragState.isDragging) {
+        dragState.isDragging = true;
+        document.body.style.userSelect = 'none';
+
+        // Option/Alt key held = copy the event
+        if (e.altKey) {
+          const sessions = state.sessions[state.currentDate] || [];
+          const original = sessions.find(s => s.id === dragState.sessionId);
+          if (original) {
+            const copy = {
+              ...original,
+              id: state.nextSessionId++,
+              title: original.title,
+              roomIds: [...original.roomIds]
+            };
+            sessions.push(copy);
+            // Switch drag to the copy; original stays in place
+            dragState.sessionId = copy.id;
+            dragState.isAllRooms = copy.allRooms;
+          }
+        }
+
+        draggingSessionId = dragState.sessionId;
+      }
+
+      // Find which room body the cursor is over
+      const target = getRoomBodyAt(e.clientX, e.clientY);
+      if (!target) return;
+
+      const relativeY = e.clientY - target.rect.top - dragState.offsetY;
+      const slot = Math.max(0, Math.min(totalSlots() - dragState.spanSlots, Math.round(relativeY / ROW_HEIGHT)));
+
+      const sessions = state.sessions[state.currentDate] || [];
+      const session = sessions.find(s => s.id === dragState.sessionId);
+      if (!session) return;
+
+      session.startTime = slotToTime(slot);
+      session.endTime = slotToTime(slot + dragState.spanSlots);
+
+      // Only change room assignment for non-All-Locations events
+      if (!dragState.isAllRooms) {
+        session.roomIds = [target.roomId];
+      }
+
+      renderSchedule();
+    });
+
+    // Global mouseup handles tab drag, column drag, event drag, resize, and click-to-edit / click-to-add
+    document.addEventListener('mouseup', (e) => {
+      // --- TAB DRAG END ---
+      if (tabDrag) {
+        const wasDragging = tabDrag.isDragging;
+        const srcDate = tabDrag.date;
+        tabDrag = null;
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+
+        // Clear indicators
+        document.querySelectorAll('.date-tab').forEach(t => {
+          t.classList.remove('tab-dragging', 'tab-drag-over-left', 'tab-drag-over-right');
+        });
+
+        if (wasDragging) {
+          const target = getTabDropTarget(e.clientX);
+          if (target && target.date !== srcDate) {
+            const srcIdx = state.dates.indexOf(srcDate);
+            const targetIdx = state.dates.indexOf(target.date);
+            if (srcIdx >= 0 && targetIdx >= 0) {
+              state.dates.splice(srcIdx, 1);
+              let insertIdx = state.dates.indexOf(target.date);
+              if (target.side === 'right') insertIdx++;
+              state.dates.splice(insertIdx, 0, srcDate);
+              renderDateTabs();
+            }
+          }
+        } else {
+          // Was a click — switch to that tab
+          state.currentDate = srcDate;
+          renderDateTabs();
+          renderSchedule();
+        }
+        return;
+      }
+
+      // --- COLUMN DRAG END ---
+      if (columnDrag) {
+        const wasDragging = columnDrag.isDragging;
+        const srcRoomId = columnDrag.roomId;
+        columnDrag = null;
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+
+        // Clear visual indicators
+        document.querySelectorAll('.room-column').forEach(col => {
+          col.classList.remove('column-drag-over-left', 'column-drag-over-right', 'column-dragging');
+        });
+
+        if (wasDragging) {
+          const target = getColumnDropTarget(e.clientX);
+          if (target && target.roomId !== srcRoomId) {
+            const tabRooms = state.tabRooms[state.currentDate];
+            const srcIdx = tabRooms.indexOf(srcRoomId);
+            const targetIdx = tabRooms.indexOf(target.roomId);
+            if (srcIdx >= 0 && targetIdx >= 0) {
+              // Remove source from array
+              tabRooms.splice(srcIdx, 1);
+              // Find where to insert
+              let insertIdx = tabRooms.indexOf(target.roomId);
+              if (target.side === 'right') insertIdx++;
+              tabRooms.splice(insertIdx, 0, srcRoomId);
+              renderSchedule();
+            }
+          }
+        }
+        return;
+      }
+
+      if (resizing) {
+        resizing = null;
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+        return;
+      }
+
+      if (dragState) {
+        const wasDragging = dragState.isDragging;
+        const sessionId = dragState.sessionId;
+        dragState = null;
+        draggingSessionId = null;
+        document.body.style.userSelect = '';
+
+        if (!wasDragging) {
+          // Was a click, not a drag — open edit modal
+          const sessions = state.sessions[state.currentDate] || [];
+          const session = sessions.find(s => s.id === sessionId);
+          if (session) editSession(session);
+        } else {
+          renderSchedule(); // final clean render
+        }
+        return;
+      }
+
+      // --- CREATE DRAG END ---
+      if (createDrag) {
+        const wasDragging = createDrag.isDragging;
+        const roomId = createDrag.roomId;
+        const minSlot = Math.min(createDrag.startSlot, createDrag.currentSlot);
+        const maxSlot = Math.max(createDrag.startSlot, createDrag.currentSlot) + 1;
+        createDrag = null;
+        document.body.style.userSelect = '';
+
+        // Remove preview
+        document.querySelectorAll('.create-preview').forEach(el => el.remove());
+
+        if (wasDragging) {
+          const startTime = slotToTime(minSlot);
+          const endTime = slotToTime(Math.min(maxSlot, totalSlots()));
+          state.selectedSession = null;
+          openSessionModal(null, startTime, endTime, roomId);
+        } else {
+          // Was a click, not a drag — open Add Event with default 1hr range
+          const clickedSlot = minSlot;
+          const startTime = slotToTime(clickedSlot);
+          const endSlot = Math.min(totalSlots(), clickedSlot + 12);
+          const endTime = slotToTime(endSlot);
+          state.selectedSession = null;
+          openSessionModal(null, startTime, endTime, roomId);
+        }
+        return;
+      }
+    });
+
+    function renderDateTabs() {
+      const container = document.getElementById('dateTabsContainer');
+      container.innerHTML = '';
+
+      state.dates.forEach(date => {
+        const tab = document.createElement('button');
+        tab.className = 'date-tab' + (date === state.currentDate ? ' active' : '');
+        tab.dataset.date = date;
+
+        const tabLabel = document.createElement('span');
+        tabLabel.textContent = date;
+        tab.appendChild(tabLabel);
+
+        tab.addEventListener('mousedown', (e) => {
+          if (e.button !== 0) return;
+          if (e.target.closest('.date-tab-close')) return;
+          e.preventDefault();
+          tabDrag = { date, startX: e.clientX, isDragging: false };
+        });
+
+        tab.ondblclick = (e) => {
+          e.stopPropagation();
+          editDateTab(date);
+        };
+
+        tab.oncontextmenu = (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          duplicateDay(date);
+        };
+
+        const closeBtn = document.createElement('button');
+        closeBtn.className = 'date-tab-close';
+        closeBtn.innerHTML = '&times;';
+        closeBtn.onclick = (e) => {
+          e.stopPropagation();
+          removeDate(date);
+        };
+
+        tab.appendChild(closeBtn);
+        container.appendChild(tab);
+      });
+    }
+
+    function renderSessionTypes() {
+      const container = document.getElementById('sessionTypesContainer');
+      container.innerHTML = '';
+
+      Object.entries(state.sessionTypes).forEach(([typeId, typeInfo]) => {
+        const row = document.createElement('div');
+        row.className = 'session-type-row';
+
+        const colorPicker = document.createElement('input');
+        colorPicker.type = 'color';
+        colorPicker.className = 'color-picker-input';
+        colorPicker.value = typeInfo.color;
+        colorPicker.style.width = '40px';
+        colorPicker.style.height = '36px';
+        colorPicker.style.flexShrink = '0';
+        colorPicker.oninput = () => {
+          state.sessionTypes[typeId].color = colorPicker.value;
+          renderSchedule();
+        };
+        row.appendChild(colorPicker);
+
+        const info = document.createElement('div');
+        info.className = 'session-type-info';
+
+        const label = document.createElement('div');
+        label.className = 'session-type-label';
+        label.textContent = typeInfo.label;
+        info.appendChild(label);
+
+        const actions = document.createElement('div');
+        actions.className = 'session-type-actions';
+
+        const renameBtn = document.createElement('button');
+        renameBtn.textContent = 'Rename';
+        renameBtn.className = 'primary';
+        renameBtn.onclick = () => {
+          const newLabel = prompt('Type name:', typeInfo.label);
+          if (newLabel !== null && newLabel.trim()) {
+            state.sessionTypes[typeId].label = newLabel.trim();
+            renderSessionTypes();
+            renderSessionTypeSelect();
+          }
+        };
+        actions.appendChild(renameBtn);
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.textContent = 'Delete';
+        deleteBtn.className = 'danger';
+        deleteBtn.onclick = () => deleteSessionType(typeId);
+        actions.appendChild(deleteBtn);
+
+        info.appendChild(actions);
+        row.appendChild(info);
+        container.appendChild(row);
+      });
+    }
+
+    function renderSessionTypeSelect() {
+      const hidden = document.getElementById('sessionType');
+      const selected = document.getElementById('sessionTypeSelected');
+      const optionsContainer = document.getElementById('sessionTypeOptions');
+      optionsContainer.innerHTML = '';
+
+      const updateDisplay = (typeId) => {
+        const typeInfo = state.sessionTypes[typeId];
+        if (!typeInfo) return;
+        hidden.value = typeId;
+        const swatch = selected.querySelector('.type-swatch');
+        const label = selected.querySelector('.type-label');
+        swatch.style.backgroundColor = typeInfo.color;
+        label.textContent = typeInfo.label;
+      };
+
+      Object.entries(state.sessionTypes).forEach(([typeId, typeInfo]) => {
+        const opt = document.createElement('div');
+        opt.className = 'custom-type-option';
+        opt.dataset.value = typeId;
+
+        const swatch = document.createElement('span');
+        swatch.className = 'type-swatch';
+        swatch.style.backgroundColor = typeInfo.color;
+        opt.appendChild(swatch);
+
+        const label = document.createElement('span');
+        label.textContent = typeInfo.label;
+        opt.appendChild(label);
+
+        opt.addEventListener('click', (e) => {
+          e.stopPropagation();
+          updateDisplay(typeId);
+          optionsContainer.classList.remove('open');
+        });
+        optionsContainer.appendChild(opt);
+      });
+
+      // Toggle dropdown open/close
+      selected.onclick = (e) => {
+        e.stopPropagation();
+        optionsContainer.classList.toggle('open');
+      };
+
+      // Default to first type
+      const firstType = Object.keys(state.sessionTypes)[0];
+      if (firstType) updateDisplay(firstType);
+
+      // Expose updateDisplay for external use
+      hidden._updateDisplay = updateDisplay;
+    }
+
+    // Close custom dropdown when clicking outside
+    document.addEventListener('click', () => {
+      const opts = document.getElementById('sessionTypeOptions');
+      if (opts) opts.classList.remove('open');
+    });
+
+    function renderSessionRoomsCheckboxes() {
+      const container = document.getElementById('sessionRoomsContainer');
+      container.innerHTML = '';
+
+      const allRoomsLabel = document.createElement('label');
+      const allRoomsCheckbox = document.createElement('input');
+      allRoomsCheckbox.type = 'checkbox';
+      allRoomsCheckbox.id = 'sessionAllRooms';
+      allRoomsLabel.appendChild(allRoomsCheckbox);
+      allRoomsLabel.appendChild(document.createTextNode(' All Locations'));
+      container.appendChild(allRoomsLabel);
+
+      const roomsDiv = document.createElement('div');
+      roomsDiv.id = 'specificRoomsDiv';
+      roomsDiv.style.marginTop = '12px';
+
+      currentRooms().forEach(room => {
+        const label = document.createElement('label');
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.className = 'room-checkbox';
+        checkbox.value = room.id;
+        label.appendChild(checkbox);
+        label.appendChild(document.createTextNode(` ${room.name}`));
+        roomsDiv.appendChild(label);
+        roomsDiv.appendChild(document.createElement('br'));
+      });
+
+      container.appendChild(roomsDiv);
+
+      allRoomsCheckbox.onchange = () => {
+        const specificsDiv = document.getElementById('specificRoomsDiv');
+        specificsDiv.style.display = allRoomsCheckbox.checked ? 'none' : 'block';
+        if (allRoomsCheckbox.checked) {
+          document.querySelectorAll('.room-checkbox').forEach(cb => cb.checked = false);
+        }
+      };
+    }
+
+    function openSessionModal(session = null, prefillStart = '', prefillEnd = '', prefillRoomId = null) {
+      const modal = document.getElementById('sessionModal');
+      const titleEl = document.getElementById('sessionModalTitle');
+      const deleteBtn = document.getElementById('deleteSessionBtn');
+
+      renderSessionTypeSelect();
+      renderSessionRoomsCheckboxes();
+
+      const typeHidden = document.getElementById('sessionType');
+
+      if (session) {
+        titleEl.textContent = 'Edit Event';
+        document.getElementById('sessionTitle').value = session.title;
+        document.getElementById('sessionStartTime').value = session.startTime;
+        document.getElementById('sessionEndTime').value = session.endTime;
+        if (typeHidden._updateDisplay) typeHidden._updateDisplay(session.type);
+        document.getElementById('sessionVolunteer').value = session.volunteer;
+        document.getElementById('sessionDescription').value = session.description || '';
+        document.getElementById('sessionShowTime').checked = session.showTime !== false;
+        document.getElementById('sessionAllRooms').checked = session.allRooms;
+        deleteBtn.style.display = 'inline-block';
+
+        if (session.allRooms) {
+          document.getElementById('specificRoomsDiv').style.display = 'none';
+        } else {
+          document.querySelectorAll('.room-checkbox').forEach(cb => {
+            cb.checked = session.roomIds.includes(parseInt(cb.value));
+          });
+        }
+      } else {
+        titleEl.textContent = 'Add Event';
+        document.getElementById('sessionTitle').value = '';
+        document.getElementById('sessionStartTime').value = prefillStart;
+        document.getElementById('sessionEndTime').value = prefillEnd;
+        const firstType = Object.keys(state.sessionTypes)[0] || '';
+        if (typeHidden._updateDisplay && firstType) typeHidden._updateDisplay(firstType);
+        document.getElementById('sessionVolunteer').value = '';
+        document.getElementById('sessionDescription').value = '';
+        document.getElementById('sessionShowTime').checked = true;
+        document.getElementById('sessionAllRooms').checked = false;
+        document.getElementById('specificRoomsDiv').style.display = 'block';
+        document.querySelectorAll('.room-checkbox').forEach(cb => {
+          cb.checked = prefillRoomId !== null && parseInt(cb.value) === prefillRoomId;
+        });
+        deleteBtn.style.display = 'none';
+      }
+
+      document.getElementById('sessionModalAlert').innerHTML = '';
+      modal.classList.add('show');
+    }
+
+    function closeSessionModal() {
+      document.getElementById('sessionModal').classList.remove('show');
+    }
+
+    function openRoomModal() {
+      document.getElementById('roomName').value = '';
+      document.getElementById('roomCapacity').value = '';
+      document.getElementById('roomModal').classList.add('show');
+    }
+
+    function closeRoomModal() {
+      document.getElementById('roomModal').classList.remove('show');
+    }
+
+    function openManageRoomsModal() {
+      renderRoomsList();
+      document.getElementById('manageRoomsModal').classList.add('show');
+    }
+
+    function closeManageRoomsModal() {
+      document.getElementById('manageRoomsModal').classList.remove('show');
+    }
+
+    function renderRoomsList() {
+      const container = document.getElementById('roomsListContainer');
+      container.innerHTML = '';
+
+      if (state.allRooms.length === 0) {
+        container.innerHTML = '<p style="color: #999; padding: 12px;">No locations created yet.</p>';
+        return;
+      }
+
+      const tabRoomIds = state.tabRooms[state.currentDate] || [];
+
+      state.allRooms.forEach(room => {
+        const isOnTab = tabRoomIds.includes(room.id);
+
+        const row = document.createElement('div');
+        row.className = 'session-type-row';
+        row.style.opacity = '1';
+
+        const toggle = document.createElement('input');
+        toggle.type = 'checkbox';
+        toggle.checked = isOnTab;
+        toggle.style.width = '18px';
+        toggle.style.height = '18px';
+        toggle.style.cursor = 'pointer';
+        toggle.style.flexShrink = '0';
+        toggle.onchange = () => {
+          if (toggle.checked) {
+            if (!state.tabRooms[state.currentDate]) state.tabRooms[state.currentDate] = [];
+            state.tabRooms[state.currentDate].push(room.id);
+          } else {
+            const currentIds = state.tabRooms[state.currentDate] || [];
+            if (currentIds.length <= 1) {
+              alert('You must have at least one location on this tab');
+              toggle.checked = true;
+              return;
+            }
+            state.tabRooms[state.currentDate] = currentIds.filter(id => id !== room.id);
+            const tabSessions = state.sessions[state.currentDate] || [];
+            tabSessions.forEach(session => {
+              session.roomIds = session.roomIds.filter(rid => rid !== room.id);
+            });
+          }
+          renderRoomsList();
+          renderSchedule();
+        };
+        row.appendChild(toggle);
+
+        const info = document.createElement('div');
+        info.className = 'session-type-info';
+
+        const nameDiv = document.createElement('div');
+        nameDiv.className = 'session-type-label';
+        nameDiv.textContent = room.name + (room.notes ? `  ·  ${room.notes}` : '');
+        info.appendChild(nameDiv);
+
+        const actions = document.createElement('div');
+        actions.className = 'session-type-actions';
+
+        const renameBtn = document.createElement('button');
+        renameBtn.textContent = 'Edit';
+        renameBtn.className = 'primary';
+        renameBtn.onclick = () => {
+          const newName = prompt('Location name:', room.name);
+          if (newName !== null && newName.trim()) {
+            room.name = newName.trim();
+            const newNotes = prompt('Notes (optional):', room.notes || '');
+            room.notes = newNotes ? newNotes.trim() : '';
+            renderRoomsList();
+            renderSchedule();
+          }
+        };
+        actions.appendChild(renameBtn);
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.textContent = 'Delete';
+        deleteBtn.className = 'danger';
+        deleteBtn.onclick = () => {
+          const tabsUsingRoom = state.dates.filter(d =>
+            (state.tabRooms[d] || []).includes(room.id)
+          );
+          let msg = `Permanently delete "${room.name}"?`;
+          if (tabsUsingRoom.length > 0) {
+            msg += ` It is currently on ${tabsUsingRoom.length} tab(s): ${tabsUsingRoom.join(', ')}.`;
+          }
+          if (!confirm(msg)) return;
+
+          state.allRooms = state.allRooms.filter(r => r.id !== room.id);
+          state.dates.forEach(d => {
+            if (state.tabRooms[d]) {
+              state.tabRooms[d] = state.tabRooms[d].filter(id => id !== room.id);
+            }
+            (state.sessions[d] || []).forEach(session => {
+              session.roomIds = session.roomIds.filter(rid => rid !== room.id);
+            });
+          });
+          renderRoomsList();
+          renderSchedule();
+        };
+        actions.appendChild(deleteBtn);
+
+        info.appendChild(actions);
+        row.appendChild(info);
+        container.appendChild(row);
+      });
+    }
+
+    function addRoomFromManage() {
+      const name = document.getElementById('newRoomName').value.trim();
+      const notes = document.getElementById('newRoomCapacity').value.trim();
+      if (!name) {
+        alert('Please enter a location name');
+        return;
+      }
+      const newId = state.nextRoomId++;
+      state.allRooms.push({ id: newId, name, notes });
+      if (!state.tabRooms[state.currentDate]) state.tabRooms[state.currentDate] = [];
+      state.tabRooms[state.currentDate].push(newId);
+
+      document.getElementById('newRoomName').value = '';
+      document.getElementById('newRoomCapacity').value = '';
+      renderRoomsList();
+      renderSchedule();
+    }
+
+    function openDateModal() {
+      editingDateTab = null;
+      document.getElementById('dateModalTitle').textContent = 'Add Day';
+      document.getElementById('dateInput').value = '';
+      document.getElementById('dateModalAlert').innerHTML = '';
+      document.getElementById('dateModal').classList.add('show');
+    }
+
+    function closeDateModal() {
+      editingDateTab = null;
+      document.getElementById('dateModal').classList.remove('show');
+    }
+
+    function openColorsModal() {
+      renderSessionTypes();
+      document.getElementById('colorsModal').classList.add('show');
+    }
+
+    function closeColorsModal() {
+      document.getElementById('colorsModal').classList.remove('show');
+    }
+
+    function showContextMenu(x, y) {
+      const menu = document.getElementById('contextMenu');
+      menu.innerHTML = '';
+
+      // Edit button
+      const editBtn = document.createElement('button');
+      editBtn.className = 'context-menu-item';
+      editBtn.textContent = 'Edit';
+      editBtn.onclick = () => {
+        if (state.selectedSession) editSession(state.selectedSession);
+        hideContextMenu();
+      };
+      menu.appendChild(editBtn);
+
+      // Move to submenu (only if more than one day)
+      const otherDays = state.dates.filter(d => d !== state.currentDate);
+      if (otherDays.length > 0) {
+        const moveItem = document.createElement('div');
+        moveItem.className = 'context-menu-item has-submenu';
+        moveItem.textContent = 'Move to';
+
+        const submenu = document.createElement('div');
+        submenu.className = 'context-submenu';
+
+        otherDays.forEach(day => {
+          const dayBtn = document.createElement('button');
+          dayBtn.className = 'context-submenu-item';
+          dayBtn.textContent = day;
+          dayBtn.onclick = () => {
+            moveSessionToDay(state.selectedSession, day);
+            hideContextMenu();
+          };
+          submenu.appendChild(dayBtn);
+        });
+
+        moveItem.appendChild(submenu);
+        menu.appendChild(moveItem);
+      }
+
+      // Delete button
+      const delBtn = document.createElement('button');
+      delBtn.className = 'context-menu-item danger';
+      delBtn.textContent = 'Delete';
+      delBtn.onclick = deleteSession;
+      menu.appendChild(delBtn);
+
+      // Position — keep menu on screen
+      menu.style.left = `${x}px`;
+      menu.style.top = `${y}px`;
+      menu.classList.add('show');
+
+      // Adjust if it goes off the right or bottom edge
+      const rect = menu.getBoundingClientRect();
+      if (rect.right > window.innerWidth) {
+        menu.style.left = `${window.innerWidth - rect.width - 4}px`;
+      }
+      if (rect.bottom > window.innerHeight) {
+        menu.style.top = `${window.innerHeight - rect.height - 4}px`;
+      }
+      // Flip submenu left if it would go off-screen
+      const sub = menu.querySelector('.context-submenu');
+      if (sub && rect.right + 140 > window.innerWidth) {
+        sub.style.left = 'auto';
+        sub.style.right = '100%';
+      }
+    }
+
+    function moveSessionToDay(session, targetDay) {
+      if (!session) return;
+      const sourceSessions = state.sessions[state.currentDate] || [];
+      const idx = sourceSessions.findIndex(s => s.id === session.id);
+      if (idx < 0) return;
+
+      // Remove from current day
+      sourceSessions.splice(idx, 1);
+
+      // Add to target day
+      if (!state.sessions[targetDay]) state.sessions[targetDay] = [];
+      state.sessions[targetDay].push({ ...session, roomIds: [...session.roomIds] });
+
+      state.selectedSession = null;
+      renderSchedule();
+    }
+
+    function hideContextMenu() {
+      document.getElementById('contextMenu').classList.remove('show');
+    }
+
+    function saveSession() {
+      const title = document.getElementById('sessionTitle').value.trim();
+      const startTime = document.getElementById('sessionStartTime').value;
+      const endTime = document.getElementById('sessionEndTime').value;
+      const type = document.getElementById('sessionType').value;
+      const volunteer = document.getElementById('sessionVolunteer').value.trim();
+      const description = document.getElementById('sessionDescription').value.trim();
+      const showTime = document.getElementById('sessionShowTime').checked;
+      const allRooms = document.getElementById('sessionAllRooms').checked;
+
+      if (!title || !startTime || !endTime) {
+        showAlert('sessionModalAlert', 'Please fill in all required fields', 'error');
+        return;
+      }
+
+      if (timeToMinutes(startTime) >= timeToMinutes(endTime)) {
+        showAlert('sessionModalAlert', 'End time must be after start time', 'error');
+        return;
+      }
+
+      const roomIds = allRooms ? [] : Array.from(document.querySelectorAll('.room-checkbox:checked')).map(cb => parseInt(cb.value));
+
+      if (!allRooms && roomIds.length === 0) {
+        showAlert('sessionModalAlert', 'Please select at least one location or "All Locations"', 'error');
+        return;
+      }
+
+      const sessions = state.sessions[state.currentDate] || [];
+      const existingIndex = sessions.findIndex(s => s.id === state.selectedSession?.id);
+
+      const sessionData = {
+        id: state.selectedSession?.id || state.nextSessionId++,
+        title, startTime, endTime, type, volunteer, description, showTime, allRooms, roomIds
+      };
+
+      if (existingIndex >= 0) {
+        sessions[existingIndex] = sessionData;
+      } else {
+        sessions.push(sessionData);
+      }
+
+      if (!state.sessions[state.currentDate]) state.sessions[state.currentDate] = [];
+      state.sessions[state.currentDate] = sessions;
+      state.selectedSession = null;
+
+      closeSessionModal();
+      renderSchedule();
+    }
+
+    function editSession(session) {
+      state.selectedSession = session;
+      openSessionModal(session);
+    }
+
+    function deleteSession() {
+      if (!state.selectedSession) return;
+
+      const sessions = state.sessions[state.currentDate] || [];
+      const index = sessions.findIndex(s => s.id === state.selectedSession.id);
+      if (index >= 0) sessions.splice(index, 1);
+
+      state.selectedSession = null;
+      hideContextMenu();
+      closeSessionModal();
+      renderSchedule();
+    }
+
+    function saveRoom() {
+      const name = document.getElementById('roomName').value.trim();
+      const notes = document.getElementById('roomCapacity').value.trim();
+
+      if (!name) { alert('Please enter a location name'); return; }
+
+      const newId = state.nextRoomId++;
+      state.allRooms.push({ id: newId, name, notes });
+      if (!state.tabRooms[state.currentDate]) state.tabRooms[state.currentDate] = [];
+      state.tabRooms[state.currentDate].push(newId);
+
+      closeRoomModal();
+      renderSchedule();
+    }
+
+    function removeRoom(roomId) {
+      const tabRoomIds = state.tabRooms[state.currentDate] || [];
+      if (tabRoomIds.length === 1) { alert('You must have at least one location'); return; }
+
+      const room = getRoomById(roomId);
+      if (!confirm(`Remove ${room?.name} from this tab? (The location will still be available to add back later.)`)) return;
+
+      state.tabRooms[state.currentDate] = tabRoomIds.filter(id => id !== roomId);
+      const tabSessions = state.sessions[state.currentDate] || [];
+      tabSessions.forEach(session => {
+        session.roomIds = session.roomIds.filter(rid => rid !== roomId);
+      });
+
+      renderSchedule();
+    }
+
+    let editingDateTab = null;
+
+    function editDateTab(oldName) {
+      editingDateTab = oldName;
+      document.getElementById('dateModalTitle').textContent = 'Rename Day';
+      document.getElementById('dateInput').value = oldName;
+      document.getElementById('dateModal').classList.add('show');
+    }
+
+    function saveDate() {
+      const dateStr = document.getElementById('dateInput').value.trim();
+
+      if (!dateStr) {
+        showAlert('dateModalAlert', 'Please enter a name', 'error');
+        return;
+      }
+
+      if (editingDateTab) {
+        if (dateStr !== editingDateTab && state.dates.includes(dateStr)) {
+          showAlert('dateModalAlert', 'That name already exists', 'error');
+          return;
+        }
+        const idx = state.dates.indexOf(editingDateTab);
+        if (idx >= 0) {
+          state.dates[idx] = dateStr;
+          state.sessions[dateStr] = state.sessions[editingDateTab];
+          state.tabRooms[dateStr] = state.tabRooms[editingDateTab];
+          state.dayStartHour[dateStr] = state.dayStartHour[editingDateTab];
+          state.dayEndHour[dateStr] = state.dayEndHour[editingDateTab];
+          if (dateStr !== editingDateTab) {
+            delete state.sessions[editingDateTab];
+            delete state.tabRooms[editingDateTab];
+            delete state.dayStartHour[editingDateTab];
+            delete state.dayEndHour[editingDateTab];
+          }
+          if (state.currentDate === editingDateTab) state.currentDate = dateStr;
+        }
+        editingDateTab = null;
+      } else {
+        if (state.dates.includes(dateStr)) {
+          showAlert('dateModalAlert', 'That name already exists', 'error');
+          return;
+        }
+        state.dates.push(dateStr);
+        if (!state.sessions[dateStr]) state.sessions[dateStr] = [];
+        if (state.allRooms.length === 0) {
+          const newId = state.nextRoomId++;
+          state.allRooms.push({ id: newId, name: 'Location 1', notes: '' });
+          state.tabRooms[dateStr] = [newId];
+        } else {
+          state.tabRooms[dateStr] = state.allRooms.map(r => r.id);
+        }
+        state.currentDate = dateStr;
+      }
+
+      closeDateModal();
+      renderDateTabs();
+      renderSchedule();
+    }
+
+    function duplicateDay(sourceDate) {
+      let newName = sourceDate + ' (copy)';
+      let counter = 2;
+      while (state.dates.includes(newName)) {
+        newName = sourceDate + ` (copy ${counter})`;
+        counter++;
+      }
+      const name = prompt('Name for the duplicate day:', newName);
+      if (!name || !name.trim()) return;
+      const trimmed = name.trim();
+      if (state.dates.includes(trimmed)) {
+        alert('A day with that name already exists.');
+        return;
+      }
+
+      // Deep copy sessions
+      const sourceSessions = state.sessions[sourceDate] || [];
+      const copiedSessions = sourceSessions.map(s => ({
+        ...s,
+        id: state.nextSessionId++,
+        roomIds: [...s.roomIds]
+      }));
+
+      // Copy room assignments
+      const sourceRooms = state.tabRooms[sourceDate] || [];
+
+      state.dates.push(trimmed);
+      state.sessions[trimmed] = copiedSessions;
+      state.tabRooms[trimmed] = [...sourceRooms];
+      if (state.dayStartHour[sourceDate] != null) state.dayStartHour[trimmed] = state.dayStartHour[sourceDate];
+      if (state.dayEndHour[sourceDate] != null) state.dayEndHour[trimmed] = state.dayEndHour[sourceDate];
+      state.currentDate = trimmed;
+
+      renderDateTabs();
+      renderSchedule();
+    }
+
+    function removeDate(date) {
+      if (state.dates.length === 1) { alert('You must have at least one day'); return; }
+      if (!confirm(`Remove ${date}?`)) return;
+
+      state.dates = state.dates.filter(d => d !== date);
+      delete state.sessions[date];
+      delete state.tabRooms[date];
+      delete state.dayStartHour[date];
+      delete state.dayEndHour[date];
+      state.currentDate = state.dates[0];
+
+      renderDateTabs();
+      renderSchedule();
+    }
+
+    function deleteSessionType(typeId) {
+      if (!confirm(`Delete "${state.sessionTypes[typeId].label}"?`)) return;
+
+      delete state.sessionTypes[typeId];
+      Object.values(state.sessions).forEach(sessions => {
+        sessions.forEach(session => {
+          if (session.type === typeId) session.type = Object.keys(state.sessionTypes)[0] || 'event-type-1';
+        });
+      });
+
+      renderSessionTypes();
+      renderSchedule();
+    }
+
+    function addSessionType() {
+      const name = document.getElementById('newTypeName').value.trim();
+      const color = document.getElementById('newTypeColor').value;
+      if (!name) { alert('Please enter a type name'); return; }
+
+      const typeId = name.toLowerCase().replace(/\s+/g, '-');
+      if (state.sessionTypes[typeId]) { alert('This type already exists'); return; }
+
+      state.sessionTypes[typeId] = { label: name, color };
+      document.getElementById('newTypeName').value = '';
+      document.getElementById('newTypeColor').value = '#3498db';
+
+      renderSessionTypes();
+      renderSessionTypeSelect();
+    }
+
+    // App title editing
+    document.getElementById('appTitle').onclick = () => {
+      const titleEl = document.getElementById('appTitle');
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.className = 'header-title-input';
+      input.value = state.appName;
+
+      const finishEdit = () => {
+        const val = input.value.trim() || 'Untitled Schedule';
+        state.appName = val;
+        titleEl.textContent = val;
+        document.title = val;
+        titleEl.style.display = '';
+        input.remove();
+      };
+
+      input.onblur = finishEdit;
+      input.onkeydown = (e) => {
+        if (e.key === 'Enter') finishEdit();
+        if (e.key === 'Escape') { input.value = state.appName; finishEdit(); }
+      };
+
+      titleEl.style.display = 'none';
+      titleEl.parentElement.insertBefore(input, titleEl);
+      input.focus();
+      input.select();
+    };
+
+    // File menu
+    function closeAllMenus() {
+      document.querySelectorAll('.menu-dropdown').forEach(m => m.classList.remove('show'));
+    }
+
+    document.getElementById('fileMenuBtn').onclick = (e) => {
+      e.stopPropagation();
+      const dropdown = document.getElementById('fileMenuDropdown');
+      const isOpen = dropdown.classList.contains('show');
+      closeAllMenus();
+      if (!isOpen) dropdown.classList.add('show');
+    };
+
+    document.addEventListener('click', () => closeAllMenus());
+
+    function newSchedule() {
+      if (!confirm('Start a new schedule? Any unsaved changes will be lost.')) return;
+
+      state.appName = 'Untitled Schedule';
+      state.dayStartHour = { 'Day 1': 7 };
+      state.dayEndHour = { 'Day 1': 22 };
+      state.dates = ['Day 1'];
+      state.currentDate = 'Day 1';
+      state.allRooms = [
+        { id: 1, name: 'Location 1', notes: '' },
+        { id: 2, name: 'Location 2', notes: '' },
+        { id: 3, name: 'Location 3', notes: '' },
+        { id: 4, name: 'Location 4', notes: '' },
+        { id: 5, name: 'Location 5', notes: '' }
+      ];
+      state.tabRooms = { 'Day 1': [1, 2, 3, 4, 5] };
+      state.sessions = { 'Day 1': [] };
+      state.sessionTypes = { ...BUILT_IN_TYPES };
+      state.nextSessionId = 1;
+      state.nextRoomId = 6;
+
+      document.getElementById('appTitle').textContent = state.appName;
+      document.title = state.appName;
+      renderDateTabs();
+      renderSchedule();
+    }
+
+    function saveJSON() {
+      const data = {
+        version: 3,
+        appName: state.appName,
+        dayStartHour: state.dayStartHour,
+        dayEndHour: state.dayEndHour,
+        dates: state.dates,
+        allRooms: state.allRooms,
+        tabRooms: state.tabRooms,
+        sessions: state.sessions,
+        sessionTypes: state.sessionTypes
+      };
+
+      const json = JSON.stringify(data, null, 2);
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const safeName = state.appName.replace(/[^a-zA-Z0-9-_ ]/g, '').replace(/\s+/g, '-');
+      a.download = `${safeName}-${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function makeCopy() {
+      state.appName = state.appName + ' (copy)';
+      document.getElementById('appTitle').textContent = state.appName;
+      document.title = state.appName;
+      saveJSON();
+    }
+
+    function loadJSON() {
+      document.getElementById('fileInput').click();
+    }
+
+    document.getElementById('fileInput').onchange = (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const data = JSON.parse(event.target.result);
+
+          state.appName = data.appName || 'Untitled Schedule';
+          // Per-day time ranges (migrate from old single-value format)
+          if (data.dayStartHour) {
+            state.dayStartHour = data.dayStartHour;
+            state.dayEndHour = data.dayEndHour || {};
+          } else {
+            const sh = (data.startHour != null) ? data.startHour : 7;
+            const eh = (data.endHour != null) ? data.endHour : 22;
+            state.dayStartHour = {};
+            state.dayEndHour = {};
+            (data.dates || ['Day 1']).forEach(d => {
+              state.dayStartHour[d] = sh;
+              state.dayEndHour[d] = eh;
+            });
+          }
+          state.dates = data.dates || ['Day 1'];
+          state.sessions = data.sessions || {};
+          state.sessionTypes = data.sessionTypes || { ...BUILT_IN_TYPES };
+
+          if (data.version >= 2 && data.allRooms) {
+            state.allRooms = data.allRooms;
+            state.tabRooms = data.tabRooms || {};
+          } else if (data.rooms) {
+            const allRoomsMap = {};
+            Object.values(data.rooms).forEach(roomArr => {
+              (roomArr || []).forEach(room => {
+                if (!allRoomsMap[room.id]) allRoomsMap[room.id] = room;
+              });
+            });
+            state.allRooms = Object.values(allRoomsMap);
+            state.tabRooms = {};
+            Object.entries(data.rooms).forEach(([tab, roomArr]) => {
+              state.tabRooms[tab] = (roomArr || []).map(r => r.id);
+            });
+          }
+
+          // Migrate old 'capacity' field to 'notes'
+          state.allRooms.forEach(r => {
+            if (r.capacity !== undefined && r.notes === undefined) {
+              r.notes = r.capacity;
+              delete r.capacity;
+            }
+            if (r.notes === undefined) r.notes = '';
+          });
+
+          const maxRoomId = state.allRooms.reduce((max, r) => Math.max(max, r.id), 0);
+          state.nextRoomId = Math.max(state.nextRoomId, maxRoomId + 1);
+
+          const maxSessionId = Object.values(state.sessions).flat().reduce((max, s) => Math.max(max, s.id || 0), 0);
+          state.nextSessionId = Math.max(state.nextSessionId, maxSessionId + 1);
+
+          state.currentDate = state.dates[0];
+
+          document.getElementById('appTitle').textContent = state.appName;
+          document.title = state.appName;
+
+          renderDateTabs();
+          renderSchedule();
+
+          alert('Schedule loaded successfully!');
+        } catch (err) {
+          alert('Error loading file: ' + err.message);
+        }
+      };
+      reader.readAsText(file);
+      e.target.value = '';
+    };
+
+    // Wire up buttons
+    document.getElementById('addSessionBtn').onclick = () => {
+      state.selectedSession = null;
+      openSessionModal();
+    };
+
+    document.getElementById('saveSessionBtn').onclick = saveSession;
+    document.getElementById('cancelSessionBtn').onclick = closeSessionModal;
+    document.getElementById('closeSessionModal').onclick = closeSessionModal;
+    document.getElementById('deleteSessionBtn').onclick = () => {
+      if (state.selectedSession && confirm('Delete this event?')) {
+        deleteSession();
+      }
+    };
+
+    document.getElementById('manageRoomsBtn').onclick = openManageRoomsModal;
+    document.getElementById('closeManageRoomsModal').onclick = closeManageRoomsModal;
+    document.getElementById('addNewRoomBtn').onclick = addRoomFromManage;
+
+    document.getElementById('addDateBtn').onclick = openDateModal;
+    document.getElementById('saveDateBtn').onclick = saveDate;
+    document.getElementById('cancelDateBtn').onclick = closeDateModal;
+    document.getElementById('closeDateModal').onclick = closeDateModal;
+
+    document.getElementById('manageColorsBtn').onclick = openColorsModal;
+    document.getElementById('closeColorsModal').onclick = closeColorsModal;
+    document.getElementById('addTypeBtn').onclick = addSessionType;
+
+    document.getElementById('newBtn').onclick = newSchedule;
+    document.getElementById('openBtn').onclick = loadJSON;
+    document.getElementById('saveBtn').onclick = saveJSON;
+    document.getElementById('copyBtn').onclick = makeCopy;
+
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.context-menu')) hideContextMenu();
+    });
+
+    // Initialize
+    document.title = state.appName;
+    renderDateTabs();
+    renderSchedule();
+  </script>
+</body>
+</html>
