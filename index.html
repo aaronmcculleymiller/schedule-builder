@@ -1275,13 +1275,13 @@
     // ── Supabase client ──
     const SUPABASE_URL = 'https://tbdrtggcqtxgjjdanyuf.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_b81Hgx6Kga-emUZ45tzBOw_q6RXFE8n';
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     let currentUser = null;
 
     // ── Auth helpers ──
     async function signInWithGoogle() {
-      const { error } = await supabase.auth.signInWithOAuth({
+      const { error } = await supabaseClient.auth.signInWithOAuth({
         provider: 'google',
         options: { redirectTo: window.location.origin + window.location.pathname }
       });
@@ -1289,7 +1289,7 @@
     }
 
     async function signOut() {
-      await supabase.auth.signOut();
+      await supabaseClient.auth.signOut();
       currentUser = null;
       state.cloudScheduleId = null;
       state.cloudDirty = false;
@@ -1334,13 +1334,13 @@
     }
 
     // Listen for auth state changes
-    supabase.auth.onAuthStateChange((event, session) => {
+    supabaseClient.auth.onAuthStateChange((event, session) => {
       currentUser = session?.user || null;
       updateAuthUI();
     });
 
     // Check initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabaseClient.auth.getSession().then(({ data: { session } }) => {
       currentUser = session?.user || null;
       updateAuthUI();
     });
@@ -1423,12 +1423,12 @@
         const schedId = state.cloudScheduleId;
 
         // 2. Update schedule name
-        await supabase.from('schedules').update({ name: state.appName }).eq('id', schedId);
+        await supabaseClient.from('schedules').update({ name: state.appName }).eq('id', schedId);
 
         // 3. Delete all children (cascading deletes handle grandchildren)
-        await supabase.from('event_types').delete().eq('schedule_id', schedId);
-        await supabase.from('days').delete().eq('schedule_id', schedId);
-        await supabase.from('locations').delete().eq('schedule_id', schedId);
+        await supabaseClient.from('event_types').delete().eq('schedule_id', schedId);
+        await supabaseClient.from('days').delete().eq('schedule_id', schedId);
+        await supabaseClient.from('locations').delete().eq('schedule_id', schedId);
 
         // 4. Insert event_types and build key -> uuid map
         const typeKeyToUuid = {};
@@ -1441,7 +1441,7 @@
             color: t.color,
             sort_order: i
           }));
-          const { data: insertedTypes, error: typeErr } = await supabase.from('event_types').insert(typeRows).select();
+          const { data: insertedTypes, error: typeErr } = await supabaseClient.from('event_types').insert(typeRows).select();
           if (typeErr) throw typeErr;
           insertedTypes.forEach((et, i) => {
             typeKeyToUuid[typeEntries[i][0]] = et.id;
@@ -1492,7 +1492,7 @@
           });
         });
         if (dlRows.length > 0) {
-          const { error: dlErr } = await supabase.from('day_locations').insert(dlRows);
+          const { error: dlErr } = await supabaseClient.from('day_locations').insert(dlRows);
           if (dlErr) throw dlErr;
         }
 
@@ -1530,7 +1530,7 @@
             }
           });
           if (elRows.length > 0) {
-            const { error: elErr } = await supabase.from('event_locations').insert(elRows);
+            const { error: elErr } = await supabaseClient.from('event_locations').insert(elRows);
             if (elErr) throw elErr;
           }
         }
@@ -1562,10 +1562,10 @@
           { data: eventTypes },
           { data: dayLocations },
         ] = await Promise.all([
-          supabase.from('days').select('*').eq('schedule_id', scheduleId).order('sort_order'),
-          supabase.from('locations').select('*').eq('schedule_id', scheduleId),
-          supabase.from('event_types').select('*').eq('schedule_id', scheduleId).order('sort_order'),
-          supabase.from('day_locations').select('*, days!inner(schedule_id)').eq('days.schedule_id', scheduleId).order('sort_order'),
+          supabaseClient.from('days').select('*').eq('schedule_id', scheduleId).order('sort_order'),
+          supabaseClient.from('locations').select('*').eq('schedule_id', scheduleId),
+          supabaseClient.from('event_types').select('*').eq('schedule_id', scheduleId).order('sort_order'),
+          supabaseClient.from('day_locations').select('*, days!inner(schedule_id)').eq('days.schedule_id', scheduleId).order('sort_order'),
         ]);
 
         // Get events for all days
