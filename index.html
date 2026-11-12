@@ -1637,6 +1637,18 @@
         });
 
         const newSessions = {};
+        // Reconstruct sessionTypes and build uuid -> key map
+        const newSessionTypes = {};
+        const typeUuidToKey = {};
+        if (eventTypes && eventTypes.length > 0) {
+          eventTypes.forEach(et => {
+            newSessionTypes[et.key] = { label: et.label, color: et.color };
+            typeUuidToKey[et.id] = et.key;
+          });
+        } else {
+          Object.assign(newSessionTypes, BUILT_IN_TYPES);
+        }
+
         newDates.forEach(d => newSessions[d] = []);
         events.forEach(ev => {
           const dayLabel = dayUuidToLabel[ev.day_id];
@@ -1656,18 +1668,6 @@
             roomIds
           });
         });
-
-        // Reconstruct sessionTypes and build uuid -> key map
-        const newSessionTypes = {};
-        const typeUuidToKey = {};
-        if (eventTypes && eventTypes.length > 0) {
-          eventTypes.forEach(et => {
-            newSessionTypes[et.key] = { label: et.label, color: et.color };
-            typeUuidToKey[et.id] = et.key;
-          });
-        } else {
-          Object.assign(newSessionTypes, BUILT_IN_TYPES);
-        }
 
         // 5. Apply to state
         state.appName = sched.name || 'Untitled Schedule';
