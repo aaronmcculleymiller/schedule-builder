@@ -1410,10 +1410,20 @@
       try {
         // 1. Create or get schedule
         if (!state.cloudScheduleId) {
+          // Insert without .select() — the SELECT RLS policy requires membership,
+          // but the trigger that adds us as admin fires after the insert.
+          const { error: insertErr } = await supabaseClient
+            .from('schedules')
+            .insert({ name: state.appName, created_by: currentUser.id });
+          if (insertErr) throw insertErr;
+          // Now fetch the newly created schedule (trigger has made us a member)
           const { data: sched, error: schedErr } = await supabaseClient
             .from('schedules')
-            .insert({ name: state.appName, created_by: currentUser.id })
-            .select()
+            .select('id')
+            .eq('name', state.appName)
+            .eq('created_by', currentUser.id)
+            .order('created_at', { ascending: false })
+            .limit(1)
             .single();
           if (schedErr) throw schedErr;
           state.cloudScheduleId = sched.id;
