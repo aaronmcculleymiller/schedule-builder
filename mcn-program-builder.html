@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Schedule Builder</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='2' y='6' width='28' height='24' rx='3' fill='%232c3e50'/%3E%3Crect x='2' y='6' width='28' height='7' rx='3' fill='%233498db'/%3E%3Crect x='6' y='16' width='5' height='4' rx='1' fill='%2327ae60'/%3E%3Crect x='13.5' y='16' width='5' height='4' rx='1' fill='%23e67e22'/%3E%3Crect x='21' y='16' width='5' height='4' rx='1' fill='%239b59b6'/%3E%3Crect x='6' y='23' width='5' height='4' rx='1' fill='%23e74c3c'/%3E%3Crect x='13.5' y='23' width='5' height='4' rx='1' fill='%233498db'/%3E%3Crect x='21' y='23' width='5' height='4' rx='1' fill='%2327ae60'/%3E%3C/svg%3E">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     * {
       margin: 0;
@@ -890,6 +891,189 @@
       color: #229954;
       border: 1px solid #a9dfbf;
     }
+
+    /* Auth section in header */
+    .auth-section {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-right: 10px;
+    }
+
+    .auth-section .user-info {
+      font-size: 12px;
+      color: rgba(255,255,255,0.8);
+      max-width: 160px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .google-signin-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      background: white;
+      color: #444;
+      border: none;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .google-signin-btn:hover {
+      background: #f0f0f0;
+    }
+
+    .google-signin-btn svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .signout-btn {
+      padding: 4px 10px;
+      background: rgba(255,255,255,0.15);
+      color: rgba(255,255,255,0.8);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 4px;
+      font-size: 11px;
+      cursor: pointer;
+    }
+
+    .signout-btn:hover {
+      background: rgba(255,255,255,0.25);
+      color: white;
+    }
+
+    /* Cloud save indicator */
+    .cloud-status {
+      font-size: 11px;
+      color: rgba(255,255,255,0.5);
+      margin-left: 4px;
+    }
+
+    .cloud-status.saved {
+      color: rgba(100,220,140,0.8);
+    }
+
+    .cloud-status.saving {
+      color: rgba(255,200,60,0.8);
+    }
+
+    .cloud-status.dirty {
+      color: rgba(255,150,100,0.8);
+    }
+
+    /* Schedules modal */
+    .schedules-modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 5000;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .schedules-modal.show {
+      display: flex;
+    }
+
+    .schedules-modal-content {
+      background: white;
+      border-radius: 8px;
+      width: 500px;
+      max-height: 70vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    }
+
+    .schedules-modal-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid #eee;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .schedules-modal-header h3 {
+      margin: 0;
+      font-size: 16px;
+    }
+
+    .schedules-modal-body {
+      padding: 12px;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .schedule-list-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .schedule-list-item:hover {
+      background: #f0f4ff;
+    }
+
+    .schedule-list-item .schedule-name {
+      font-weight: 500;
+      font-size: 14px;
+    }
+
+    .schedule-list-item .schedule-meta {
+      font-size: 11px;
+      color: #888;
+      margin-top: 2px;
+    }
+
+    .schedule-list-item .schedule-role {
+      font-size: 11px;
+      color: #3498db;
+      background: #eaf2fb;
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+
+    .schedule-list-empty {
+      text-align: center;
+      padding: 40px 20px;
+      color: #999;
+      font-size: 14px;
+    }
+
+    .schedule-list-loading {
+      text-align: center;
+      padding: 40px 20px;
+      color: #999;
+    }
+
+    .menu-dropdown-item.disabled {
+      color: #aaa;
+      cursor: default;
+    }
+
+    .menu-dropdown-item.disabled:hover {
+      background: none;
+    }
+
+    .menu-dropdown-label {
+      padding: 6px 16px 2px;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #999;
+      font-weight: 600;
+    }
   </style>
 </head>
 <body>
@@ -897,18 +1081,28 @@
     <div class="header">
       <div class="header-left">
         <span class="header-title" id="appTitle" title="Click to rename">Untitled Schedule</span>
+        <span class="cloud-status" id="cloudStatus"></span>
         <div class="file-menu-wrapper">
           <button class="file-btn" id="fileMenuBtn">File &#9662;</button>
           <div class="menu-dropdown" id="fileMenuDropdown">
             <button class="menu-dropdown-item" id="newBtn">New</button>
-            <button class="menu-dropdown-item" id="openBtn">Open...</button>
-            <div class="menu-divider"></div>
-            <button class="menu-dropdown-item" id="saveBtn">Save</button>
-            <button class="menu-dropdown-item" id="copyBtn">Make a copy</button>
+            <button class="menu-dropdown-item" id="openCloudBtn" style="display:none;">My Schedules...</button>
+            <button class="menu-dropdown-item" id="saveCloudBtn" style="display:none;">Save</button>
+            <button class="menu-dropdown-item" id="copyCloudBtn" style="display:none;">Make a copy</button>
+            <div class="menu-divider" id="cloudMenuDivider" style="display:none;"></div>
+            <div class="menu-dropdown-label" id="cloudMenuLabel" style="display:none;">Local Files</div>
+            <button class="menu-dropdown-item" id="openBtn">Open File...</button>
+            <button class="menu-dropdown-item" id="saveBtn">Save to File</button>
           </div>
         </div>
       </div>
-      <div style="display: flex; gap: 10px;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <div class="auth-section" id="authSection">
+          <button class="google-signin-btn" id="googleSignInBtn" onclick="signInWithGoogle()">
+            <svg viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.27-4.74 3.27-8.1z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+            Sign in with Google
+          </button>
+        </div>
         <button class="primary" id="manageRoomsBtn">Manage Locations</button>
         <button class="primary" id="manageColorsBtn">Manage Event Types</button>
       </div>
@@ -1060,11 +1254,487 @@
     </div>
   </div>
 
+  <!-- My Schedules modal -->
+  <div class="schedules-modal" id="schedulesModal">
+    <div class="schedules-modal-content">
+      <div class="schedules-modal-header">
+        <h3>My Schedules</h3>
+        <button class="modal-close" onclick="closeSchedulesModal()">&times;</button>
+      </div>
+      <div class="schedules-modal-body" id="schedulesModalBody">
+        <div class="schedule-list-loading">Loading...</div>
+      </div>
+    </div>
+  </div>
+
   <input type="file" id="fileInput" accept=".json" style="display: none;">
 
   <div class="context-menu" id="contextMenu"></div>
 
   <script>
+    // ── Supabase client ──
+    const SUPABASE_URL = 'https://tbdrtggcqtxgjjdanyuf.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_b81Hgx6Kga-emUZ45tzBOw_q6RXFE8n';
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let currentUser = null;
+
+    // ── Auth helpers ──
+    async function signInWithGoogle() {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: window.location.origin + window.location.pathname }
+      });
+      if (error) alert('Sign-in error: ' + error.message);
+    }
+
+    async function signOut() {
+      await supabase.auth.signOut();
+      currentUser = null;
+      state.cloudScheduleId = null;
+      state.cloudDirty = false;
+      updateAuthUI();
+      updateCloudStatus();
+    }
+
+    function updateAuthUI() {
+      const section = document.getElementById('authSection');
+      // Cloud menu items
+      const cloudItems = ['openCloudBtn','saveCloudBtn','copyCloudBtn','cloudMenuDivider','cloudMenuLabel'];
+      if (currentUser) {
+        const displayName = currentUser.user_metadata?.full_name || currentUser.email || 'User';
+        section.innerHTML = `
+          <span class="user-info" title="${currentUser.email || ''}">${displayName}</span>
+          <button class="signout-btn" onclick="signOut()">Sign out</button>
+        `;
+        cloudItems.forEach(id => document.getElementById(id).style.display = '');
+      } else {
+        section.innerHTML = `
+          <button class="google-signin-btn" onclick="signInWithGoogle()">
+            <svg viewBox="0 0 24 24" width="16" height="16"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.27-4.74 3.27-8.1z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+            Sign in with Google
+          </button>
+        `;
+        cloudItems.forEach(id => document.getElementById(id).style.display = 'none');
+      }
+    }
+
+    function updateCloudStatus() {
+      const el = document.getElementById('cloudStatus');
+      if (!state.cloudScheduleId) {
+        el.textContent = '';
+        el.className = 'cloud-status';
+      } else if (state.cloudDirty) {
+        el.textContent = '(unsaved changes)';
+        el.className = 'cloud-status dirty';
+      } else {
+        el.textContent = '(saved to cloud)';
+        el.className = 'cloud-status saved';
+      }
+    }
+
+    // Listen for auth state changes
+    supabase.auth.onAuthStateChange((event, session) => {
+      currentUser = session?.user || null;
+      updateAuthUI();
+    });
+
+    // Check initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      currentUser = session?.user || null;
+      updateAuthUI();
+    });
+
+    // ── Schedules modal ──
+    function closeSchedulesModal() {
+      document.getElementById('schedulesModal').classList.remove('show');
+    }
+
+    async function openSchedulesModal() {
+      if (!currentUser) { alert('Please sign in first.'); return; }
+      const modal = document.getElementById('schedulesModal');
+      const body = document.getElementById('schedulesModalBody');
+      body.innerHTML = '<div class="schedule-list-loading">Loading...</div>';
+      modal.classList.add('show');
+
+      const { data: memberships, error } = await supabase
+        .from('schedule_members')
+        .select('role, schedule_id, schedules(id, name, created_at)')
+        .eq('user_id', currentUser.id)
+        .order('created_at', { foreignTable: 'schedules', ascending: false });
+
+      if (error) {
+        body.innerHTML = '<div class="schedule-list-empty">Error loading schedules.</div>';
+        console.error(error);
+        return;
+      }
+
+      if (!memberships || memberships.length === 0) {
+        body.innerHTML = '<div class="schedule-list-empty">No schedules yet. Click File &rarr; New to create one.</div>';
+        return;
+      }
+
+      body.innerHTML = '';
+      memberships.forEach(m => {
+        const sched = m.schedules;
+        if (!sched) return;
+        const item = document.createElement('div');
+        item.className = 'schedule-list-item';
+        const created = new Date(sched.created_at).toLocaleDateString();
+        item.innerHTML = `
+          <div>
+            <div class="schedule-name">${escapeHTML(sched.name)}</div>
+            <div class="schedule-meta">Created ${created}</div>
+          </div>
+          <span class="schedule-role">${m.role}</span>
+        `;
+        item.onclick = () => { closeSchedulesModal(); loadFromCloud(sched.id); };
+        body.appendChild(item);
+      });
+    }
+
+    function escapeHTML(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    // ── Cloud save ──
+    async function saveToCloud() {
+      if (!currentUser) { alert('Please sign in first.'); return; }
+
+      const statusEl = document.getElementById('cloudStatus');
+      statusEl.textContent = '(saving...)';
+      statusEl.className = 'cloud-status saving';
+
+      try {
+        // 1. Create or get schedule
+        if (!state.cloudScheduleId) {
+          const { data: sched, error: schedErr } = await supabase
+            .from('schedules')
+            .insert({ name: state.appName, created_by: currentUser.id })
+            .select()
+            .single();
+          if (schedErr) throw schedErr;
+          state.cloudScheduleId = sched.id;
+          // seed_default_event_types is auto-called by trigger, but we'll overwrite with actual types
+        }
+
+        const schedId = state.cloudScheduleId;
+
+        // 2. Update schedule name
+        await supabase.from('schedules').update({ name: state.appName }).eq('id', schedId);
+
+        // 3. Delete all children (cascading deletes handle grandchildren)
+        await supabase.from('event_types').delete().eq('schedule_id', schedId);
+        await supabase.from('days').delete().eq('schedule_id', schedId);
+        await supabase.from('locations').delete().eq('schedule_id', schedId);
+
+        // 4. Insert event_types and build key -> uuid map
+        const typeKeyToUuid = {};
+        const typeEntries = Object.entries(state.sessionTypes);
+        if (typeEntries.length > 0) {
+          const typeRows = typeEntries.map(([key, t], i) => ({
+            schedule_id: schedId,
+            key: key,
+            label: t.label,
+            color: t.color,
+            sort_order: i
+          }));
+          const { data: insertedTypes, error: typeErr } = await supabase.from('event_types').insert(typeRows).select();
+          if (typeErr) throw typeErr;
+          insertedTypes.forEach((et, i) => {
+            typeKeyToUuid[typeEntries[i][0]] = et.id;
+          });
+        }
+
+        // 5. Insert locations and build ID map
+        const locationUuidMap = {}; // local id -> uuid
+        if (state.allRooms.length > 0) {
+          const locRows = state.allRooms.map((r, i) => ({
+            schedule_id: schedId,
+            name: r.name,
+            notes: r.notes || ''
+          }));
+          const { data: insertedLocs, error: locErr } = await supabase
+            .from('locations').insert(locRows).select();
+          if (locErr) throw locErr;
+          insertedLocs.forEach((loc, i) => {
+            locationUuidMap[state.allRooms[i].id] = loc.id;
+          });
+        }
+
+        // 6. Insert days and build map
+        const dayUuidMap = {}; // day label -> uuid
+        const dayRows = state.dates.map((d, i) => ({
+          schedule_id: schedId,
+          label: d,
+          sort_order: i,
+          start_hour: (state.dayStartHour && state.dayStartHour[d] != null) ? state.dayStartHour[d] : 7,
+          end_hour: (state.dayEndHour && state.dayEndHour[d] != null) ? state.dayEndHour[d] : 22
+        }));
+        const { data: insertedDays, error: dayErr } = await supabase
+          .from('days').insert(dayRows).select();
+        if (dayErr) throw dayErr;
+        insertedDays.forEach((day, i) => {
+          dayUuidMap[state.dates[i]] = day.id;
+        });
+
+        // 7. Insert day_locations
+        const dlRows = [];
+        state.dates.forEach(d => {
+          const dayId = dayUuidMap[d];
+          const roomIds = (state.tabRooms && state.tabRooms[d]) || [];
+          roomIds.forEach((rid, i) => {
+            if (locationUuidMap[rid]) {
+              dlRows.push({ day_id: dayId, location_id: locationUuidMap[rid], sort_order: i });
+            }
+          });
+        });
+        if (dlRows.length > 0) {
+          const { error: dlErr } = await supabase.from('day_locations').insert(dlRows);
+          if (dlErr) throw dlErr;
+        }
+
+        // 8. Insert events and event_locations
+        for (const dayLabel of state.dates) {
+          const dayId = dayUuidMap[dayLabel];
+          const sessions = state.sessions[dayLabel] || [];
+          if (sessions.length === 0) continue;
+
+          const eventRows = sessions.map((s, i) => ({
+            day_id: dayId,
+            title: s.title,
+            start_time: s.startTime,
+            end_time: s.endTime,
+            event_type_id: (s.type && typeKeyToUuid[s.type]) || null,
+            all_locations: !!s.allRooms,
+            notes: s.volunteer || '',
+            description: s.description || '',
+            show_time: s.showTime !== false
+          }));
+          const { data: insertedEvents, error: evErr } = await supabase
+            .from('events').insert(eventRows).select();
+          if (evErr) throw evErr;
+
+          // event_locations
+          const elRows = [];
+          insertedEvents.forEach((ev, i) => {
+            const s = sessions[i];
+            if (!s.allRooms && s.roomIds) {
+              s.roomIds.forEach(rid => {
+                if (locationUuidMap[rid]) {
+                  elRows.push({ event_id: ev.id, location_id: locationUuidMap[rid] });
+                }
+              });
+            }
+          });
+          if (elRows.length > 0) {
+            const { error: elErr } = await supabase.from('event_locations').insert(elRows);
+            if (elErr) throw elErr;
+          }
+        }
+
+        state.cloudDirty = false;
+        updateCloudStatus();
+      } catch (err) {
+        console.error('Save to cloud failed:', err);
+        alert('Save failed: ' + (err.message || JSON.stringify(err)));
+        statusEl.textContent = '(save failed)';
+        statusEl.className = 'cloud-status dirty';
+      }
+    }
+
+    // ── Cloud load ──
+    async function loadFromCloud(scheduleId) {
+      if (!currentUser) { alert('Please sign in first.'); return; }
+
+      try {
+        // 1. Get schedule
+        const { data: sched, error: schedErr } = await supabase
+          .from('schedules').select('*').eq('id', scheduleId).single();
+        if (schedErr) throw schedErr;
+
+        // 2. Get all related data
+        const [
+          { data: days },
+          { data: locations },
+          { data: eventTypes },
+          { data: dayLocations },
+        ] = await Promise.all([
+          supabase.from('days').select('*').eq('schedule_id', scheduleId).order('sort_order'),
+          supabase.from('locations').select('*').eq('schedule_id', scheduleId),
+          supabase.from('event_types').select('*').eq('schedule_id', scheduleId).order('sort_order'),
+          supabase.from('day_locations').select('*, days!inner(schedule_id)').eq('days.schedule_id', scheduleId).order('sort_order'),
+        ]);
+
+        // Get events for all days
+        const dayIds = (days || []).map(d => d.id);
+        let events = [];
+        let eventLocations = [];
+        if (dayIds.length > 0) {
+          const { data: evData } = await supabase
+            .from('events').select('*').in('day_id', dayIds).order('start_time');
+          events = evData || [];
+
+          if (events.length > 0) {
+            const eventIds = events.map(e => e.id);
+            const { data: elData } = await supabase
+              .from('event_locations').select('*').in('event_id', eventIds);
+            eventLocations = elData || [];
+          }
+        }
+
+        // 3. Build maps: UUID -> local integer ID
+        let nextLocalRoomId = 1;
+        let nextLocalSessionId = 1;
+        const locUuidToLocalId = {};
+        const localRooms = (locations || []).map(loc => {
+          const localId = nextLocalRoomId++;
+          locUuidToLocalId[loc.id] = localId;
+          return { id: localId, name: loc.name, notes: loc.notes || '' };
+        });
+
+        // Build event_locations lookup: eventUuid -> [locationUuid]
+        const evLocMap = {};
+        (eventLocations || []).forEach(el => {
+          if (!evLocMap[el.event_id]) evLocMap[el.event_id] = [];
+          evLocMap[el.event_id].push(el.location_id);
+        });
+
+        // Build day_locations lookup: dayUuid -> [locationUuid in order]
+        const dlMap = {};
+        (dayLocations || []).forEach(dl => {
+          if (!dlMap[dl.day_id]) dlMap[dl.day_id] = [];
+          dlMap[dl.day_id].push(dl.location_id);
+        });
+
+        // 4. Reconstruct state
+        const newDates = (days || []).map(d => d.label);
+        const newDayStartHour = {};
+        const newDayEndHour = {};
+        const dayUuidToLabel = {};
+        (days || []).forEach(d => {
+          dayUuidToLabel[d.id] = d.label;
+          newDayStartHour[d.label] = d.start_hour != null ? d.start_hour : 7;
+          newDayEndHour[d.label] = d.end_hour != null ? d.end_hour : 22;
+        });
+
+        const newTabRooms = {};
+        (days || []).forEach(d => {
+          const locUuids = dlMap[d.id] || [];
+          newTabRooms[d.label] = locUuids.map(uuid => locUuidToLocalId[uuid]).filter(Boolean);
+        });
+
+        const newSessions = {};
+        newDates.forEach(d => newSessions[d] = []);
+        events.forEach(ev => {
+          const dayLabel = dayUuidToLabel[ev.day_id];
+          if (!dayLabel) return;
+          const roomIds = ev.all_locations ? [] :
+            (evLocMap[ev.id] || []).map(uuid => locUuidToLocalId[uuid]).filter(Boolean);
+          newSessions[dayLabel].push({
+            id: nextLocalSessionId++,
+            title: ev.title,
+            startTime: ev.start_time,
+            endTime: ev.end_time,
+            type: (ev.event_type_id && typeUuidToKey[ev.event_type_id]) || '',
+            volunteer: ev.notes || '',
+            description: ev.description || '',
+            showTime: ev.show_time !== false,
+            allRooms: !!ev.all_locations,
+            roomIds
+          });
+        });
+
+        // Reconstruct sessionTypes and build uuid -> key map
+        const newSessionTypes = {};
+        const typeUuidToKey = {};
+        if (eventTypes && eventTypes.length > 0) {
+          eventTypes.forEach(et => {
+            newSessionTypes[et.key] = { label: et.label, color: et.color };
+            typeUuidToKey[et.id] = et.key;
+          });
+        } else {
+          Object.assign(newSessionTypes, BUILT_IN_TYPES);
+        }
+
+        // 5. Apply to state
+        state.appName = sched.name || 'Untitled Schedule';
+        state.dayStartHour = newDayStartHour;
+        state.dayEndHour = newDayEndHour;
+        state.dates = newDates.length > 0 ? newDates : ['Day 1'];
+        state.currentDate = state.dates[0];
+        state.allRooms = localRooms;
+        state.tabRooms = newTabRooms;
+        state.sessions = newSessions;
+        state.sessionTypes = newSessionTypes;
+        state.nextRoomId = nextLocalRoomId;
+        state.nextSessionId = nextLocalSessionId;
+        state.cloudScheduleId = scheduleId;
+        state.cloudDirty = false;
+
+        document.getElementById('appTitle').textContent = state.appName;
+        document.title = state.appName;
+        renderDateTabs();
+        renderSchedule();
+        updateCloudStatus();
+      } catch (err) {
+        console.error('Load from cloud failed:', err);
+        alert('Failed to load schedule: ' + (err.message || JSON.stringify(err)));
+      }
+    }
+
+    // ── Cloud copy ──
+    async function makeCopyCloud() {
+      if (!currentUser) { alert('Please sign in first.'); return; }
+      state.appName = state.appName + ' (copy)';
+      state.cloudScheduleId = null; // force creation of a new schedule
+      state.cloudDirty = true;
+      document.getElementById('appTitle').textContent = state.appName;
+      document.title = state.appName;
+      await saveToCloud();
+    }
+
+    // ── Cloud new ──
+    async function newScheduleCloud() {
+      if (!confirm('Start a new schedule? Any unsaved changes will be lost.')) return;
+      state.cloudScheduleId = null;
+      state.cloudDirty = false;
+      newScheduleLocal();
+      if (currentUser) {
+        await saveToCloud();
+      }
+    }
+
+    function newScheduleLocal() {
+      state.appName = 'Untitled Schedule';
+      state.dayStartHour = { 'Day 1': 7 };
+      state.dayEndHour = { 'Day 1': 22 };
+      state.dates = ['Day 1'];
+      state.currentDate = 'Day 1';
+      state.allRooms = [
+        { id: 1, name: 'Location 1', notes: '' },
+        { id: 2, name: 'Location 2', notes: '' },
+        { id: 3, name: 'Location 3', notes: '' },
+        { id: 4, name: 'Location 4', notes: '' },
+        { id: 5, name: 'Location 5', notes: '' }
+      ];
+      state.tabRooms = { 'Day 1': [1, 2, 3, 4, 5] };
+      state.sessions = { 'Day 1': [] };
+      state.sessionTypes = { ...BUILT_IN_TYPES };
+      state.nextSessionId = 1;
+      state.nextRoomId = 6;
+      state.cloudScheduleId = null;
+      state.cloudDirty = false;
+
+      document.getElementById('appTitle').textContent = state.appName;
+      document.title = state.appName;
+      renderDateTabs();
+      renderSchedule();
+      updateCloudStatus();
+    }
+
     const ROW_HEIGHT = 12;
     const SLOTS_PER_HOUR = 12;
 
@@ -1123,7 +1793,9 @@
       sessionTypes: { ...BUILT_IN_TYPES },
       nextSessionId: 1,
       nextRoomId: 6,
-      selectedSession: null
+      selectedSession: null,
+      cloudScheduleId: null,
+      cloudDirty: false
     };
 
     // Interaction state (mouse-event based drag and resize)
@@ -2689,30 +3361,12 @@
     document.addEventListener('click', () => closeAllMenus());
 
     function newSchedule() {
-      if (!confirm('Start a new schedule? Any unsaved changes will be lost.')) return;
-
-      state.appName = 'Untitled Schedule';
-      state.dayStartHour = { 'Day 1': 7 };
-      state.dayEndHour = { 'Day 1': 22 };
-      state.dates = ['Day 1'];
-      state.currentDate = 'Day 1';
-      state.allRooms = [
-        { id: 1, name: 'Location 1', notes: '' },
-        { id: 2, name: 'Location 2', notes: '' },
-        { id: 3, name: 'Location 3', notes: '' },
-        { id: 4, name: 'Location 4', notes: '' },
-        { id: 5, name: 'Location 5', notes: '' }
-      ];
-      state.tabRooms = { 'Day 1': [1, 2, 3, 4, 5] };
-      state.sessions = { 'Day 1': [] };
-      state.sessionTypes = { ...BUILT_IN_TYPES };
-      state.nextSessionId = 1;
-      state.nextRoomId = 6;
-
-      document.getElementById('appTitle').textContent = state.appName;
-      document.title = state.appName;
-      renderDateTabs();
-      renderSchedule();
+      if (currentUser) {
+        newScheduleCloud();
+      } else {
+        if (!confirm('Start a new schedule? Any unsaved changes will be lost.')) return;
+        newScheduleLocal();
+      }
     }
 
     function saveJSON() {
@@ -2740,6 +3394,7 @@
     }
 
     function makeCopy() {
+      // File-based copy: download JSON
       state.appName = state.appName + ' (copy)';
       document.getElementById('appTitle').textContent = state.appName;
       document.title = state.appName;
@@ -2858,7 +3513,9 @@
     document.getElementById('newBtn').onclick = newSchedule;
     document.getElementById('openBtn').onclick = loadJSON;
     document.getElementById('saveBtn').onclick = saveJSON;
-    document.getElementById('copyBtn').onclick = makeCopy;
+    document.getElementById('openCloudBtn').onclick = () => { closeAllMenus(); openSchedulesModal(); };
+    document.getElementById('saveCloudBtn').onclick = () => { closeAllMenus(); saveToCloud(); };
+    document.getElementById('copyCloudBtn').onclick = () => { closeAllMenus(); makeCopyCloud(); };
 
     document.addEventListener('click', (e) => {
       if (!e.target.closest('.context-menu')) hideContextMenu();
