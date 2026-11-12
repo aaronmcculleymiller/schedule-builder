@@ -1357,7 +1357,7 @@
       body.innerHTML = '<div class="schedule-list-loading">Loading...</div>';
       modal.classList.add('show');
 
-      const { data: memberships, error } = await supabase
+      const { data: memberships, error } = await supabaseClient
         .from('schedule_members')
         .select('role, schedule_id, schedules(id, name, created_at)')
         .eq('user_id', currentUser.id)
@@ -1410,7 +1410,7 @@
       try {
         // 1. Create or get schedule
         if (!state.cloudScheduleId) {
-          const { data: sched, error: schedErr } = await supabase
+          const { data: sched, error: schedErr } = await supabaseClient
             .from('schedules')
             .insert({ name: state.appName, created_by: currentUser.id })
             .select()
@@ -1456,7 +1456,7 @@
             name: r.name,
             notes: r.notes || ''
           }));
-          const { data: insertedLocs, error: locErr } = await supabase
+          const { data: insertedLocs, error: locErr } = await supabaseClient
             .from('locations').insert(locRows).select();
           if (locErr) throw locErr;
           insertedLocs.forEach((loc, i) => {
@@ -1473,7 +1473,7 @@
           start_hour: (state.dayStartHour && state.dayStartHour[d] != null) ? state.dayStartHour[d] : 7,
           end_hour: (state.dayEndHour && state.dayEndHour[d] != null) ? state.dayEndHour[d] : 22
         }));
-        const { data: insertedDays, error: dayErr } = await supabase
+        const { data: insertedDays, error: dayErr } = await supabaseClient
           .from('days').insert(dayRows).select();
         if (dayErr) throw dayErr;
         insertedDays.forEach((day, i) => {
@@ -1513,7 +1513,7 @@
             description: s.description || '',
             show_time: s.showTime !== false
           }));
-          const { data: insertedEvents, error: evErr } = await supabase
+          const { data: insertedEvents, error: evErr } = await supabaseClient
             .from('events').insert(eventRows).select();
           if (evErr) throw evErr;
 
@@ -1551,7 +1551,7 @@
 
       try {
         // 1. Get schedule
-        const { data: sched, error: schedErr } = await supabase
+        const { data: sched, error: schedErr } = await supabaseClient
           .from('schedules').select('*').eq('id', scheduleId).single();
         if (schedErr) throw schedErr;
 
@@ -1573,13 +1573,13 @@
         let events = [];
         let eventLocations = [];
         if (dayIds.length > 0) {
-          const { data: evData } = await supabase
+          const { data: evData } = await supabaseClient
             .from('events').select('*').in('day_id', dayIds).order('start_time');
           events = evData || [];
 
           if (events.length > 0) {
             const eventIds = events.map(e => e.id);
-            const { data: elData } = await supabase
+            const { data: elData } = await supabaseClient
               .from('event_locations').select('*').in('event_id', eventIds);
             eventLocations = elData || [];
           }
