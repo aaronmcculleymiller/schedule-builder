@@ -1278,6 +1278,58 @@
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     let currentUser = null;
+    let realtimeChannel = null;
+    let suppressRealtimeReload = false;
+    let realtimeDebounceTimer = null;
+
+    // ── Realtime sync ──
+    function subscribeToRealtime(scheduleId) {
+      unsubscribeFromRealtime();
+      realtimeChannel = supabaseClient
+        .channel('schedule-sync-' + scheduleId)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'schedules', filter: 'id=eq.' + scheduleId }, handleRealtimeChange)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'days', filter: 'schedule_id=eq.' + scheduleId }, handleRealtimeChange)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'locations', filter: 'schedule_id=eq.' + scheduleId }, handleRealtimeChange)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'event_types', filter: 'schedule_id=eq.' + scheduleId }, handleRealtimeChange)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'day_locations' }, handleRealtimeChange)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, handleRealtimeChange)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'event_locations' }, handleRealtimeChange)
+        .subscribe();
+    }
+
+    function handleRealtimeChange(payload) {
+      if (suppressRealtimeReload) return;
+      clearTimeout(realtimeDebounceTimer);
+      realtimeDebounceTimer = setTimeout(() => {
+        if (state.cloudScheduleId) {
+          loadFromCloud(state.cloudScheduleId);
+        }
+      }, 500);
+    }
+
+    function unsubscribeFromRealtime() {
+      if (realtimeChannel) {
+        supabaseClient.removeChannel(realtimeChannel);
+        realtimeChannel = null;
+      }
+      clearTimeout(realtimeDebounceTimer);
+    }
+
+    // ── Autosave ──
+    let autosaveTimer = null;
+    let suppressAutosave = false;
+    function triggerAutosave() {
+      if (suppressAutosave) return;
+      if (!currentUser || !state.cloudScheduleId) return;
+      state.cloudDirty = true;
+      updateCloudStatus();
+      clearTimeout(autosaveTimer);
+      autosaveTimer = setTimeout(() => {
+        if (currentUser && state.cloudScheduleId && state.cloudDirty) {
+          saveToCloud();
+        }
+      }, 3000); // Save 3 seconds after last change
+    }
 
     // ── Auth helpers ──
     async function signInWithGoogle() {
@@ -1289,6 +1341,7 @@
     }
 
     async function signOut() {
+      unsubscribeFromRealtime();
       await supabaseClient.auth.signOut();
       currentUser = null;
       state.cloudScheduleId = null;
@@ -1403,6 +1456,7 @@
     async function saveToCloud() {
       if (!currentUser) { alert('Please sign in first.'); return; }
 
+      suppressRealtimeReload = true; // Don't reload from our own save
       const statusEl = document.getElementById('cloudStatus');
       statusEl.textContent = '(saving...)';
       statusEl.className = 'cloud-status saving';
@@ -1547,18 +1601,24 @@
 
         state.cloudDirty = false;
         updateCloudStatus();
+        // Re-subscribe in case this was a new schedule
+        if (state.cloudScheduleId) subscribeToRealtime(state.cloudScheduleId);
       } catch (err) {
         console.error('Save to cloud failed:', err);
         alert('Save failed: ' + (err.message || JSON.stringify(err)));
         statusEl.textContent = '(save failed)';
         statusEl.className = 'cloud-status dirty';
+      } finally {
+        // Re-enable realtime reloads after a short delay
+        // (allow Supabase to finish broadcasting our changes)
+        setTimeout(() => { suppressRealtimeReload = false; }, 2000);
       }
     }
 
     // ── Cloud load ──
     async function loadFromCloud(scheduleId) {
       if (!currentUser) { alert('Please sign in first.'); return; }
-
+      suppressAutosave = true;
       try {
         // 1. Get schedule
         const { data: sched, error: schedErr } = await supabaseClient
@@ -1689,9 +1749,13 @@
         renderDateTabs();
         renderSchedule();
         updateCloudStatus();
+        // Subscribe to real-time changes for this schedule
+        subscribeToRealtime(scheduleId);
       } catch (err) {
         console.error('Load from cloud failed:', err);
         alert('Failed to load schedule: ' + (err.message || JSON.stringify(err)));
+      } finally {
+        suppressAutosave = false;
       }
     }
 
@@ -1955,6 +2019,7 @@
 
 
     function renderSchedule() {
+      triggerAutosave();
       const grid = document.getElementById('scheduleGrid');
       grid.innerHTML = '';
 
@@ -3422,6 +3487,7 @@
       const reader = new FileReader();
       reader.onload = (event) => {
         try {
+          suppressAutosave = true;
           const data = JSON.parse(event.target.result);
 
           state.appName = data.appName || 'Untitled Schedule';
@@ -3483,8 +3549,10 @@
           renderDateTabs();
           renderSchedule();
 
+          suppressAutosave = false;
           alert('Schedule loaded successfully!');
         } catch (err) {
+          suppressAutosave = false;
           alert('Error loading file: ' + err.message);
         }
       };
@@ -3532,9 +3600,11 @@
     });
 
     // Initialize
+    suppressAutosave = true;
     document.title = state.appName;
     renderDateTabs();
     renderSchedule();
+    suppressAutosave = false;
   </script>
 </body>
 </html>
