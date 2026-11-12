@@ -1497,14 +1497,18 @@
         .on('postgres_changes', { event: '*', schema: 'public', table: 'day_locations' }, handleRealtimeChange)
         .on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, handleRealtimeChange)
         .on('postgres_changes', { event: '*', schema: 'public', table: 'event_locations' }, handleRealtimeChange)
-        .subscribe();
+        .subscribe((status, err) => {
+          console.log('[realtime] subscription status:', status, err || '');
+        });
     }
 
     function handleRealtimeChange(payload) {
-      if (suppressRealtimeReload) return;
+      console.log('[realtime] change received:', payload.table, payload.eventType);
+      if (suppressRealtimeReload) { console.log('[realtime] suppressed'); return; }
       clearTimeout(realtimeDebounceTimer);
       realtimeDebounceTimer = setTimeout(() => {
         if (state.cloudScheduleId) {
+          console.log('[realtime] reloading from cloud...');
           loadFromCloud(state.cloudScheduleId);
         }
       }, 500);
@@ -1611,6 +1615,12 @@
       window.history.replaceState({}, '', url.pathname);
     }
 
+    function setScheduleInUrl(scheduleId) {
+      const url = new URL(window.location);
+      url.searchParams.set('schedule', scheduleId);
+      window.history.replaceState({}, '', url.toString());
+    }
+
     let pendingScheduleLoad = getScheduleFromUrl();
 
     // Listen for auth state changes
@@ -1621,7 +1631,6 @@
       if (currentUser && pendingScheduleLoad) {
         const schedId = pendingScheduleLoad;
         pendingScheduleLoad = null;
-        clearScheduleFromUrl();
         loadFromCloud(schedId);
       }
     });
@@ -1634,7 +1643,6 @@
       if (currentUser && pendingScheduleLoad) {
         const schedId = pendingScheduleLoad;
         pendingScheduleLoad = null;
-        clearScheduleFromUrl();
         loadFromCloud(schedId);
       }
     });
@@ -1848,6 +1856,7 @@
             .single();
           if (schedErr) throw schedErr;
           state.cloudScheduleId = sched.id;
+          setScheduleInUrl(sched.id);
           // seed_default_event_types is auto-called by trigger, but we'll overwrite with actual types
         }
 
@@ -2123,6 +2132,7 @@
 
         document.getElementById('appTitle').textContent = state.appName;
         document.title = state.appName;
+        setScheduleInUrl(scheduleId);
         renderDateTabs();
         renderSchedule();
         updateCloudStatus();
