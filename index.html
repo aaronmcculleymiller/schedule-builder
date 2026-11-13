@@ -1490,28 +1490,35 @@
       unsubscribeFromRealtime();
       realtimeChannel = supabaseClient
         .channel('schedule-sync-' + scheduleId)
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'schedules', filter: 'id=eq.' + scheduleId }, handleRealtimeChange)
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'days', filter: 'schedule_id=eq.' + scheduleId }, handleRealtimeChange)
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'locations', filter: 'schedule_id=eq.' + scheduleId }, handleRealtimeChange)
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'event_types', filter: 'schedule_id=eq.' + scheduleId }, handleRealtimeChange)
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'day_locations' }, handleRealtimeChange)
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, handleRealtimeChange)
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'event_locations' }, handleRealtimeChange)
+        .on('broadcast', { event: 'schedule-updated' }, (payload) => {
+          console.log('[realtime] broadcast received:', payload);
+          // Ignore our own broadcasts
+          if (payload.payload && payload.payload.updatedBy === currentUser?.id) {
+            console.log('[realtime] ignoring own broadcast');
+            return;
+          }
+          clearTimeout(realtimeDebounceTimer);
+          realtimeDebounceTimer = setTimeout(() => {
+            if (state.cloudScheduleId) {
+              console.log('[realtime] reloading from cloud...');
+              loadFromCloud(state.cloudScheduleId);
+            }
+          }, 500);
+        })
         .subscribe((status, err) => {
           console.log('[realtime] subscription status:', status, err || '');
         });
     }
 
-    function handleRealtimeChange(payload) {
-      console.log('[realtime] change received:', payload.table, payload.eventType);
-      if (suppressRealtimeReload) { console.log('[realtime] suppressed'); return; }
-      clearTimeout(realtimeDebounceTimer);
-      realtimeDebounceTimer = setTimeout(() => {
-        if (state.cloudScheduleId) {
-          console.log('[realtime] reloading from cloud...');
-          loadFromCloud(state.cloudScheduleId);
-        }
-      }, 500);
+    function broadcastScheduleUpdate() {
+      if (realtimeChannel) {
+        console.log('[realtime] broadcasting update...');
+        realtimeChannel.send({
+          type: 'broadcast',
+          event: 'schedule-updated',
+          payload: { updatedBy: currentUser?.id, timestamp: Date.now() }
+        });
+      }
     }
 
     function unsubscribeFromRealtime() {
@@ -1979,6 +1986,9 @@
         updateCloudStatus();
         // Re-subscribe in case this was a new schedule
         if (state.cloudScheduleId) subscribeToRealtime(state.cloudScheduleId);
+        // Notify other clients that the schedule was updated
+        // Small delay to ensure subscription is ready after re-subscribe
+        setTimeout(() => broadcastScheduleUpdate(), 500);
       } catch (err) {
         console.error('Save to cloud failed:', err);
         alert('Save failed: ' + (err.message || JSON.stringify(err)));
