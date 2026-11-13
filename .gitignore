@@ -1,1 +1,13 @@
 *-backup-*
+
+# Only track app files — ignore everything else
+*.docx
+*.xlsx
+*.pptx
+*.pdf
+*.csv
+*.zip
+*.png
+*.jpg
+*.jpeg
+*.gif
