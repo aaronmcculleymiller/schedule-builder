@@ -1044,6 +1044,21 @@
       border-radius: 10px;
     }
 
+    .schedule-delete-btn {
+      background: none;
+      border: none;
+      color: #ccc;
+      font-size: 16px;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 4px;
+      margin-left: 8px;
+    }
+    .schedule-delete-btn:hover {
+      color: #e74c3c;
+      background: #fdecea;
+    }
+
     .schedule-list-empty {
       text-align: center;
       padding: 40px 20px;
@@ -1690,16 +1705,56 @@
         const item = document.createElement('div');
         item.className = 'schedule-list-item';
         const created = new Date(sched.created_at).toLocaleDateString();
+        const isActive = state.cloudScheduleId === sched.id;
         item.innerHTML = `
-          <div>
-            <div class="schedule-name">${escapeHTML(sched.name)}</div>
+          <div style="flex:1;cursor:pointer" class="schedule-list-open">
+            <div class="schedule-name">${escapeHTML(sched.name)}${isActive ? ' <span style="color:#4CAF50;font-size:0.8em">● open</span>' : ''}</div>
             <div class="schedule-meta">Created ${created}</div>
           </div>
           <span class="schedule-role">${m.role}</span>
+          ${m.role === 'admin' ? '<button class="schedule-delete-btn" title="Delete schedule">✕</button>' : ''}
         `;
-        item.onclick = () => { closeSchedulesModal(); loadFromCloud(sched.id); };
+        item.querySelector('.schedule-list-open').onclick = () => { closeSchedulesModal(); loadFromCloud(sched.id); };
+        const deleteBtn = item.querySelector('.schedule-delete-btn');
+        if (deleteBtn) {
+          deleteBtn.onclick = (e) => { e.stopPropagation(); deleteSchedule(sched.id, sched.name); };
+        }
         body.appendChild(item);
       });
+    }
+
+    async function deleteSchedule(scheduleId, scheduleName) {
+      if (!confirm('Delete "' + scheduleName + '"? This will permanently remove the schedule and all its data for all members. This cannot be undone.')) return;
+      try {
+        const { error } = await supabaseClient.from('schedules').delete().eq('id', scheduleId);
+        if (error) throw error;
+        // If we just deleted the currently open schedule, reset state
+        if (state.cloudScheduleId === scheduleId) {
+          unsubscribeFromRealtime();
+          state.cloudScheduleId = null;
+          state.cloudDirty = false;
+          state.appName = 'Untitled Schedule';
+          state.dates = ['Day 1'];
+          state.sessions = {};
+          state.allRooms = [];
+          state.tabRooms = {};
+          state.sessionTypes = { ...BUILT_IN_TYPES };
+          document.getElementById('appTitle').textContent = state.appName;
+          document.title = state.appName;
+          const url = new URL(window.location);
+          url.searchParams.delete('schedule');
+          window.history.replaceState({}, '', url.pathname);
+          renderDateTabs();
+          suppressAutosave = true;
+          renderSchedule();
+          suppressAutosave = false;
+          updateCloudStatus();
+        }
+        // Refresh the list
+        openSchedulesModal();
+      } catch (err) {
+        alert('Delete failed: ' + (err.message || JSON.stringify(err)));
+      }
     }
 
     function escapeHTML(str) {
